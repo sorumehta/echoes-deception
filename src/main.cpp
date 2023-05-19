@@ -45,8 +45,8 @@ public:
         InputEventHandler::addCallback("onUserInputFn_Game", onUserInputFn);
         nLevelWidth = 64;
         nLevelHeight = 16;
-        nTileWidth = 16;
-        nTileHeight = 16;
+        nTileWidth = 24;
+        nTileHeight = 24;
 
 
         sLevel += "................................................................";
@@ -113,10 +113,10 @@ public:
                 char sTileId = GetTile(x + static_cast<int>(fOffsetX), y + static_cast<int>(fOffsetY));
                 switch (sTileId) {
                     case '.':
-                        fillRect(x * nTileWidth, y * nTileHeight, nTileWidth, nTileHeight, {0, 0, 0xFF});
+                        fillRect(x * nTileWidth, y * nTileHeight, nTileWidth, nTileHeight, {0, 0xFF, 0xFF});
                         break;
                     case '#':
-                        fillRect(x * nTileWidth, y * nTileHeight, nTileWidth, nTileHeight, {0, 0xFF, 0});
+                        fillRect(x * nTileWidth, y * nTileHeight, nTileWidth, nTileHeight, {0xFF, 0xFF, 0});
                         break;
                     default:
                         break;
@@ -133,7 +133,7 @@ public:
 
 int main() {
     Echoes echoes;
-    echoes.constructConsole(8 * 64, 10 * 16, "Echoes Of Deception");
+    echoes.constructConsole(30*24, 16 * 24, "Echoes Of Deception");
     echoes.startGameLoop();
     return 0;
 }
