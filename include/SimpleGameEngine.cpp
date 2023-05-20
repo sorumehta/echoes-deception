@@ -286,8 +286,7 @@ void GameEngine::startGameLoop() {
                 } else {
                     buttonCode = e.button.button;
                 }
-                InputEventHandler::runCallbacks(e.type, buttonCode, mouseX, mouseY, frameElapsedTime);
-//                onKeyboardEvent(e.key.keysym.sym, frameElapsedTime);
+                onUserInputEvent(e.type, e.key.keysym.sym, mouseX, mouseY, frameElapsedTime);
             }
         }
         if (!onFrameUpdate(frameElapsedTime)) {
@@ -365,29 +364,3 @@ bool GameEngine::playMusic() {
 bool GameEngine::stopMusic() {
     Mix_HaltMusic();
 }
-
-void InputEventHandler::addCallback(const std::string &cb_name, const KeyEventFuncPtr &fn) {
-    m_callbacks.emplace_back(cb_name, fn);
-}
-
-void InputEventHandler::reset() {
-    m_callbacks.clear();
-}
-
-void InputEventHandler::runCallbacks(int eventType, int buttonCode, int mousePosX, int mousePosY, float secPerFrame) {
-    for (const auto &cbptr: m_callbacks) {
-        cbptr.second(eventType, buttonCode, mousePosX, mousePosY, secPerFrame);
-    }
-}
-
-void InputEventHandler::removeCallback(const std::string &cb_name) {
-    auto it = std::remove_if(m_callbacks.begin(), m_callbacks.end(),
-                             [&](const std::pair<std::string, KeyEventFuncPtr> &cbPair) -> bool {
-                                 return cbPair.first == cb_name;
-                             });
-    if (it != m_callbacks.end()) {
-        m_callbacks.erase(it);
-    }
-}
-
-std::vector<std::pair<std::string, KeyEventFuncPtr>> InputEventHandler::m_callbacks;

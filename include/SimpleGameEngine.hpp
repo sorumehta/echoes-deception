@@ -40,23 +40,6 @@ struct Color {
     int b;
 };
 
-using KeyEventFuncPtr = std::function<void(int, int, int, int, float)>;
-
-class InputEventHandler {
-private:
-    static std::vector<std::pair<std::string, KeyEventFuncPtr>> m_callbacks;
-
-public:
-    InputEventHandler() = delete; // The callback queue is shared, no point in creating instances
-    static void addCallback(const std::string &cb_name, const KeyEventFuncPtr &fn);
-
-    static void removeCallback(const std::string &cb_name);
-
-    static void reset();
-
-    static void runCallbacks(int eventType, int buttonCode, int mousePosX, int mousePosY, float secPerFrame);
-};
-
 
 class GameEngine {
 protected:
@@ -73,6 +56,7 @@ public:
     virtual bool onFrameUpdate(float fElapsedTime) = 0;
 
     virtual bool onInit() = 0;
+    virtual void onUserInputEvent(int eventType, int button, int mouseX, int mouseY, float secPerFrame) = 0;
 
     virtual bool drawPoint(int x, int y, Color color = {0xFF, 0xFF, 0xFF});
 
