@@ -17,23 +17,23 @@ private:
     float fPlayerPosY{};
     float fPlayerVelX{};
     float fPlayerVelY{};
-    int nTileWidth;
-    int nTileHeight;
+    int nTileWidth{};
+    int nTileHeight{};
 
 public:
     void onUserInputEvent(int eventType, int button, int mousePosX, int mousePosY, float secPerFrame) {
         if (eventType == SDL_KEYDOWN) {
             if (button == SDLK_UP) {
-                fPlayerVelY = -16.0f;
+                fPlayerVelY = -10.0f;
             }
             if (button == SDLK_DOWN) {
-                fPlayerVelY = 16.0f;
+                fPlayerVelY = 10.0f;
             }
             if (button == SDLK_LEFT) {
-                fPlayerVelX = -16.0f;
+                fPlayerVelX = -10.0f;
             }
             if (button == SDLK_RIGHT) {
-                fPlayerVelX = 16.0f;
+                fPlayerVelX = 10.0f;
             }
         }
     }
@@ -86,8 +86,45 @@ public:
 //        };
 
 
-        fPlayerPosX += fPlayerVelX * fElapsedTime;
-        fPlayerPosY += fPlayerVelY * fElapsedTime;
+        float fNewPlayerPosX = fPlayerPosX + fPlayerVelX * fElapsedTime;
+        float fNewPlayerPosY = fPlayerPosY + fPlayerVelY * fElapsedTime;
+
+        // resolve collision along X axis, if any
+        if(fPlayerVelX < 0){
+            if(GetTile(static_cast<int>(fNewPlayerPosX), static_cast<int>(fPlayerPosY)) != '.' ||
+                    GetTile(static_cast<int>(fNewPlayerPosX), static_cast<int>(fPlayerPosY+0.9)) != '.'){
+                // cast the new position to an integer and shift by 1 so that the player is on the boundary
+                // of the colliding tile, instead of leaving some space
+                fNewPlayerPosX = static_cast<int>(fNewPlayerPosX)+1;
+                fPlayerVelX = 0;
+
+            }
+        } else if(fPlayerVelX > 0){
+            if(GetTile(static_cast<int>(fNewPlayerPosX+1), static_cast<int>(fPlayerPosY)) != '.' ||
+               GetTile(static_cast<int>(fNewPlayerPosX+1), static_cast<int>(fPlayerPosY+0.9)) != '.'){
+                fNewPlayerPosX = static_cast<int>(fNewPlayerPosX);
+                fPlayerVelX = 0;
+            }
+        }
+        // check collision along y
+        if(fPlayerVelY < 0){
+            if(GetTile(static_cast<int>(fNewPlayerPosX), static_cast<int>(fNewPlayerPosY)) != '.' ||
+               GetTile(static_cast<int>(fNewPlayerPosX + 0.9), static_cast<int>(fNewPlayerPosY)) != '.'){
+                fNewPlayerPosY = static_cast<int>(fNewPlayerPosY)+1;
+                fPlayerVelY = 0;
+            }
+        } else if(fPlayerVelY > 0){
+            if(GetTile(static_cast<int>(fNewPlayerPosX), static_cast<int>(fNewPlayerPosY + 1)) != '.' ||
+               GetTile(static_cast<int>(fNewPlayerPosX+0.9), static_cast<int>(fNewPlayerPosY+1)) != '.'){
+                fNewPlayerPosY = static_cast<int>(fNewPlayerPosY);
+                fPlayerVelY = 0;
+            }
+        }
+
+
+        fPlayerPosX = fNewPlayerPosX;
+        fPlayerPosY = fNewPlayerPosY;
+
         fPlayerVelX = 0;
         fPlayerVelY = 0;
         fCameraPosX = fPlayerPosX;
@@ -107,16 +144,20 @@ public:
         if (fOffsetY > static_cast<float>(nLevelHeight - nVisibleTilesY))
             fOffsetY = static_cast<float>(nLevelHeight - nVisibleTilesY);
 
+        float fTileOffsetX = fOffsetX - static_cast<int>(fOffsetX);
+        float fTileOffsetY = fOffsetY - static_cast<int>(fOffsetY);
+
         // draw each tile
-        for (int x = 0; x < nVisibleTilesX; x++) {
-            for (int y = 0; y < nVisibleTilesY; y++) {
+        // we overdraw on the corners to avoid distortion (hacky)
+        for (int x = -1; x < nVisibleTilesX+1; x++) {
+            for (int y = -1; y < nVisibleTilesY+1; y++) {
                 char sTileId = GetTile(x + static_cast<int>(fOffsetX), y + static_cast<int>(fOffsetY));
                 switch (sTileId) {
                     case '.':
-                        fillRect(x * nTileWidth, y * nTileHeight, nTileWidth, nTileHeight, {0, 0xFF, 0xFF});
+                        fillRect( static_cast<int>((x - fTileOffsetX) * nTileWidth), static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth, nTileHeight, {0, 0xFF, 0xFF});
                         break;
                     case '#':
-                        fillRect(x * nTileWidth, y * nTileHeight, nTileWidth, nTileHeight, {0xFF, 0xFF, 0});
+                        fillRect( static_cast<int>((x - fTileOffsetX) * nTileWidth), static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth, nTileHeight, {0xFF, 0xFF, 0});
                         break;
                     default:
                         break;
@@ -124,7 +165,7 @@ public:
             }
         }
         // draw player
-        fillRect(static_cast<int>(fPlayerPosX - fOffsetX )*nTileWidth , static_cast<int>(fPlayerPosY - fOffsetY )*nTileHeight , nTileWidth, nTileHeight);
+        fillRect(static_cast<int>((fPlayerPosX - fOffsetX) *nTileWidth) , static_cast<int>((fPlayerPosY - fOffsetY) *nTileHeight) , nTileWidth, nTileHeight);
 
         return true;
     }
