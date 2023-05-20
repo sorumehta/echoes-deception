@@ -10,5 +10,5 @@ add_library(console-game-engine
         include/SimpleGameEngine.cpp)
 target_link_libraries(console-game-engine -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer)
 target_link_libraries(console-game-engine -L/opt/homebrew/lib/)
-add_executable(RPG src/main.cpp)
+add_executable(RPG src/main.cpp src/RPG_Maps.cpp src/RPG_Maps.h)
 target_link_libraries(RPG console-game-engine)
