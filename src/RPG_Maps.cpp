@@ -5,6 +5,7 @@
 #include "RPG_Maps.h"
 #include <fstream>
 #include <map>
+#include <utility>
 
 cMap::cMap() {
     nWidth = 0;
@@ -35,7 +36,7 @@ bool cMap::GetSolid(int x, int y) {
 
 bool cMap::Create(const std::string& fileData, std::vector<LTexture *> spriteList, const std::string& name) {
     sName = name;
-    vSprites = spriteList;
+    vSprites = std::move(spriteList);
     std::ifstream data(fileData, std::ios::in | std::ios::binary);
     if (data.is_open()){
         data >> nWidth >> nHeight;
@@ -85,9 +86,9 @@ cMap_Village::cMap_Village() {
     spriteMap[29] = basePath + "pave.png";
 
     std::vector<LTexture *> vSpritelist;
-    for (int i=0; i < 30; i++){
+    for (const auto & spritePath : spriteMap){
         LTexture *spr = new LTexture();
-        spr->loadTextureFromFile(spriteMap[i]);
+        spr->loadTextureFromFile(spritePath);
         vSpritelist.emplace_back(spr);
     }
 

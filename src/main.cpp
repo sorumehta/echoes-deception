@@ -3,11 +3,68 @@
 #include <list>
 #include <memory>
 #include "RPG_Maps.h"
+
 const float PI = 3.14159f;
+
+class Player {
+private:
+    SDL_RendererFlip flipType;
+    SDL_Rect spriteClips[4];
+    int frame;
+    LTexture texture;
+public:
+
+    void initSpriteClips() {
+        spriteClips[0].x = 0;
+        spriteClips[0].y = 0;
+        spriteClips[0].w = 64;
+        spriteClips[0].h = 205;
+
+        spriteClips[1].x = 64;
+        spriteClips[1].y = 0;
+        spriteClips[1].w = 64;
+        spriteClips[1].h = 205;
+
+        spriteClips[2].x = 128;
+        spriteClips[2].y = 0;
+        spriteClips[2].w = 64;
+        spriteClips[2].h = 205;
+
+        spriteClips[3].x = 192;
+        spriteClips[3].y = 0;
+        spriteClips[3].w = 64;
+        spriteClips[3].h = 205;
+    }
+
+    Player() {
+        texture.loadTextureFromFile("../res/graphics/man.png", true, {0, 0xFF, 0xFF});
+        initSpriteClips();
+        frame = 0;
+        flipType = SDL_FLIP_NONE;
+    }
+
+    void drawPlayer(int x, int y, int w, int h) {
+        SDL_Rect *currentClip = nullptr;
+//        if (std::abs(vx) > 4 && std::abs(vx) < 6) {
+        if (0) {
+            currentClip = &spriteClips[frame / 2];
+        } else {
+            currentClip = &spriteClips[0];
+        }
+        texture.drawTexture(x, y, w, h, currentClip, 0,
+                            NULL,
+                            flipType);
+        frame++;
+        if (frame / 2 >= 4) {
+            frame = 0;
+        }
+    }
+};
 
 class Echoes : public GameEngine {
 private:
     cMap *pCurrentMap = nullptr;
+    Player *player = nullptr;
     // positions in tiles space
     float fCameraPosX = 0.0f;
     float fCameraPosY = 0.0f;
@@ -43,13 +100,13 @@ public:
     }
 
     bool onInit() override {
-
-
+        player = new Player();
         nTileWidth = 24;
         nTileHeight = 24;
         pCurrentMap = new cMap_Village();
         return true;
     }
+
 
     bool onFrameUpdate(float fElapsedTime) override {
 
@@ -75,15 +132,15 @@ public:
         // resolve collision along X axis, if any
         if (fPlayerVelX < 0) {
             if (pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX), static_cast<int>(fPlayerPosY)) ||
-                    pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX), static_cast<int>(fPlayerPosY + 0.9)) ) {
+                pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX), static_cast<int>(fPlayerPosY + 0.9))) {
                 // cast the new position to an integer and shift by 1 so that the player is on the boundary
                 // of the colliding tile, instead of leaving some space
                 fNewPlayerPosX = static_cast<int>(fNewPlayerPosX) + 1;
                 fPlayerVelX = 0;
             }
         } else if (fPlayerVelX > 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX + 1), static_cast<int>(fPlayerPosY))  ||
-                    pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX + 1), static_cast<int>(fPlayerPosY + 0.9)) ) {
+            if (pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX + 1), static_cast<int>(fPlayerPosY)) ||
+                pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX + 1), static_cast<int>(fPlayerPosY + 0.9))) {
                 fNewPlayerPosX = static_cast<int>(fNewPlayerPosX);
                 fPlayerVelX = 0;
             }
@@ -91,13 +148,13 @@ public:
         // check collision along y
         if (fPlayerVelY < 0) {
             if (pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX), static_cast<int>(fNewPlayerPosY)) ||
-                    pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX + 0.9), static_cast<int>(fNewPlayerPosY)) ) {
+                pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX + 0.9), static_cast<int>(fNewPlayerPosY))) {
                 fNewPlayerPosY = static_cast<int>(fNewPlayerPosY) + 1;
                 fPlayerVelY = 0;
             }
         } else if (fPlayerVelY > 0) {
             if (pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX), static_cast<int>(fNewPlayerPosY + 1)) ||
-                    pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX + 0.9), static_cast<int>(fNewPlayerPosY + 1))) {
+                pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX + 0.9), static_cast<int>(fNewPlayerPosY + 1))) {
                 fNewPlayerPosY = static_cast<int>(fNewPlayerPosY);
                 fPlayerVelY = 0;
             }
@@ -132,26 +189,14 @@ public:
             for (int y = -1; y < nVisibleTilesY + 1; y++) {
                 int spriteIdx = pCurrentMap->GetIndex(x + static_cast<int>(fOffsetX), y + static_cast<int>(fOffsetY));
                 LTexture *texture = pCurrentMap->vSprites[spriteIdx];
-                texture->drawTexture(static_cast<int>((x - fTileOffsetX) * nTileWidth), static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth, nTileHeight);
-//                switch (sTileId) {
-//                    case '.':
-//                        fillRect(static_cast<int>((x - fTileOffsetX) * nTileWidth),
-//                                 static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth, nTileHeight,
-//                                 {0, 0xFF, 0xFF});
-//                        break;
-//                    case '#':
-//                        fillRect(static_cast<int>((x - fTileOffsetX) * nTileWidth),
-//                                 static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth, nTileHeight,
-//                                 {0xFF, 0xFF, 0});
-//                        break;
-//                    default:
-//                        break;
-//                }
+                texture->drawTexture(static_cast<int>((x - fTileOffsetX) * nTileWidth),
+                                     static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth, nTileHeight);
             }
         }
         // draw player
-        fillRect(static_cast<int>((fPlayerPosX - fOffsetX) * nTileWidth),
-                 static_cast<int>((fPlayerPosY - fOffsetY) * nTileHeight), nTileWidth, nTileHeight);
+
+        player->drawPlayer(static_cast<int>((fPlayerPosX - fOffsetX) * nTileWidth),
+                          static_cast<int>((fPlayerPosY - fOffsetY) * nTileHeight), nTileWidth, nTileHeight);
 
         return true;
     }

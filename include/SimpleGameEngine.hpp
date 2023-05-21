@@ -22,10 +22,11 @@ public:
 
     bool loadTextureFromText(const std::string &text, SDL_Color color);
 
-    bool loadTextureFromFile(std::string path);
+    bool loadTextureFromFile(std::string path, bool toColorKey = false, SDL_Color colorKey = {0,0,0});
 
     void drawTexture(int x, int y, int w = 0, int h = 0, SDL_Rect *clip = NULL,
                      double angle = 0.0, SDL_Point *center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
+    void setColorMod(SDL_Color color);
 
     int getWidth() const;
 

@@ -78,7 +78,7 @@ bool LTexture::loadTextureFromText(const std::string &text, SDL_Color color) {
     return true;
 }
 
-bool LTexture::loadTextureFromFile(std::string path) {
+bool LTexture::loadTextureFromFile(std::string path, bool toColorKey, SDL_Color colorKey) {
 
     //Get rid of preexisting texture
     free();
@@ -91,8 +91,11 @@ bool LTexture::loadTextureFromFile(std::string path) {
     if (loadedSurface == NULL) {
         std::cout << "Unable to load image " << path << " SDL_image Error: \n" << IMG_GetError() << std::endl;
     } else {
-        //Color key image
-        SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 0, 0xFF, 0xFF));
+        if(toColorKey){
+            //Color key image
+            SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, colorKey.r, colorKey.g, colorKey.b));
+        }
+
 
         //Create texture from surface pixels
         newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
@@ -112,6 +115,10 @@ bool LTexture::loadTextureFromFile(std::string path) {
     mTexture = newTexture;
     return mTexture != NULL;
 
+}
+
+void LTexture::setColorMod(SDL_Color color) {
+    SDL_SetTextureColorMod(mTexture, color.r, color.g, color.b);
 }
 
 
