@@ -8,12 +8,12 @@ const float PI = 3.14159f;
 
 class Player {
 private:
-    SDL_RendererFlip flipType;
+
     SDL_Rect spriteClips[4];
-    int frame;
+    float frame;
     LTexture texture;
 public:
-
+    SDL_RendererFlip flipType;
     void initSpriteClips() {
         spriteClips[0].x = 0;
         spriteClips[0].y = 0;
@@ -39,25 +39,25 @@ public:
     Player() {
         texture.loadTextureFromFile("../res/graphics/man.png", true, {0, 0xFF, 0xFF});
         initSpriteClips();
-        frame = 0;
+        frame = 0.0f;
         flipType = SDL_FLIP_NONE;
     }
 
-    void drawPlayer(int x, int y, int w, int h) {
+    void drawPlayer(int x, int y, int w, int h, bool changeFrame, float fSecElapsed) {
         SDL_Rect *currentClip = nullptr;
-//        if (std::abs(vx) > 4 && std::abs(vx) < 6) {
-        if (0) {
-            currentClip = &spriteClips[frame / 2];
+        if (changeFrame) {
+            currentClip = &spriteClips[static_cast<int>(frame)];
+            frame += 10*fSecElapsed;
+            if (frame >= 4.0f) {
+                frame = 0.0f;
+            }
         } else {
             currentClip = &spriteClips[0];
         }
         texture.drawTexture(x, y, w, h, currentClip, 0,
                             NULL,
                             flipType);
-        frame++;
-        if (frame / 2 >= 4) {
-            frame = 0;
-        }
+
     }
 };
 
@@ -86,9 +86,12 @@ public:
             }
             if (button == SDLK_LEFT) {
                 fPlayerVelX += -10.0f * secPerFrame;
+                player->flipType = SDL_FLIP_NONE;
             }
             if (button == SDLK_RIGHT) {
                 fPlayerVelX += 10.0f * secPerFrame;
+                player->flipType = SDL_FLIP_HORIZONTAL;
+
             }
             if (button == SDLK_SPACE) {
                 if (fPlayerVelY == 0) {
@@ -163,6 +166,12 @@ public:
         fPlayerPosX = fNewPlayerPosX;
         fPlayerPosY = fNewPlayerPosY;
 
+        // apply friction
+        fPlayerVelX += -2.0f * fPlayerVelX * fElapsedTime;
+        if(std::abs(fPlayerVelX) < 0.01f){
+            fPlayerVelX = 0.0f;
+        }
+
         fCameraPosX = fPlayerPosX;
         fCameraPosY = fPlayerPosY;
         // Draw Level
@@ -194,9 +203,12 @@ public:
             }
         }
         // draw player
-
+        bool bWalkingAnimation = false;
+        if (std::abs(fPlayerVelX) > 0.3 || std::abs(fPlayerVelY) > 0.3){
+            bWalkingAnimation = true;
+        }
         player->drawPlayer(static_cast<int>((fPlayerPosX - fOffsetX) * nTileWidth),
-                          static_cast<int>((fPlayerPosY - fOffsetY) * nTileHeight), nTileWidth, nTileHeight);
+                          static_cast<int>((fPlayerPosY - fOffsetY) * nTileHeight), nTileWidth, nTileHeight, bWalkingAnimation, fElapsedTime);
 
         return true;
     }
