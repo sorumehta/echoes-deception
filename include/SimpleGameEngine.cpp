@@ -270,6 +270,8 @@ void GameEngine::startGameLoop() {
     auto prevFrameTime = std::chrono::system_clock::now();
     auto currFrameTime = std::chrono::system_clock::now();
 
+    const unsigned char *keyboardState = SDL_GetKeyboardState(NULL);
+
     while (!quit) {
         // handle timing
         currFrameTime = std::chrono::system_clock::now();
@@ -283,19 +285,13 @@ void GameEngine::startGameLoop() {
             //User requests quit
             if (e.type == SDL_QUIT) {
                 quit = true;
-            } else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP || e.type == SDL_MOUSEBUTTONDOWN ||
-                       e.type == SDL_MOUSEBUTTONUP || e.type == SDL_MOUSEMOTION) {
-                int mouseX, mouseY;
-                SDL_GetMouseState(&mouseX, &mouseY);
-                int buttonCode;
-                if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) {
-                    buttonCode = e.key.keysym.sym;
-                } else {
-                    buttonCode = e.button.button;
-                }
-                onUserInputEvent(e.type, e.key.keysym.sym, mouseX, mouseY, frameElapsedTime);
+            } else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
+                quit = true;
             }
         }
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        onUserInputEvent(0, keyboardState, mouseX, mouseY, frameElapsedTime);
         if (!onFrameUpdate(frameElapsedTime)) {
             quit = true;
         }

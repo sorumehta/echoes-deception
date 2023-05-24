@@ -76,30 +76,29 @@ private:
     int nTileHeight{};
 
 public:
-    void onUserInputEvent(int eventType, int button, int mouseX, int mouseY, float secPerFrame) override {
-        if (eventType == SDL_KEYDOWN) {
-            if (button == SDLK_UP) {
+    void onUserInputEvent(int eventType, const unsigned char *state, int mouseX, int mouseY, float secPerFrame) override {
+            if (state[SDL_SCANCODE_UP]) {
                 fPlayerVelY += -10.0f * secPerFrame;
             }
-            if (button == SDLK_DOWN) {
+            if (state[SDL_SCANCODE_DOWN]) {
                 fPlayerVelY += 10.0f * secPerFrame;
             }
-            if (button == SDLK_LEFT) {
+            if (state[SDL_SCANCODE_LEFT]) {
                 fPlayerVelX += -10.0f * secPerFrame;
                 player->flipType = SDL_FLIP_NONE;
             }
-            if (button == SDLK_RIGHT) {
+            if (state[SDL_SCANCODE_RIGHT]) {
                 fPlayerVelX += 10.0f * secPerFrame;
                 player->flipType = SDL_FLIP_HORIZONTAL;
 
             }
-            if (button == SDLK_SPACE) {
+            if (state[SDL_SCANCODE_SPACE]) {
                 if (fPlayerVelY == 0) {
                     fPlayerVelY = -10.0f;
                 }
 
             }
-        }
+
     }
 
     bool onInit() override {
@@ -116,11 +115,11 @@ public:
 
 
         // clamp velocities
-        if (fPlayerVelY > 100) {
-            fPlayerVelY = 100.0f;
+        if (fPlayerVelY > 10) {
+            fPlayerVelY = 10.0f;
         }
-        if (fPlayerVelY < -100) {
-            fPlayerVelY = -100.0f;
+        if (fPlayerVelY < -10) {
+            fPlayerVelY = -10.0f;
         }
         if (fPlayerVelX > 10) {
             fPlayerVelX = 10.0f;
@@ -167,9 +166,13 @@ public:
         fPlayerPosY = fNewPlayerPosY;
 
         // apply friction
-        fPlayerVelX += -2.0f * fPlayerVelX * fElapsedTime;
+        fPlayerVelX += -4.0f * fPlayerVelX * fElapsedTime;
         if(std::abs(fPlayerVelX) < 0.01f){
             fPlayerVelX = 0.0f;
+        }
+        fPlayerVelY += -4.0f * fPlayerVelY * fElapsedTime;
+        if(std::abs(fPlayerVelY) < 0.01f){
+            fPlayerVelY = 0.0f;
         }
 
         fCameraPosX = fPlayerPosX;

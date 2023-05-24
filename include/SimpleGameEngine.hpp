@@ -57,7 +57,7 @@ public:
     virtual bool onFrameUpdate(float fElapsedTime) = 0;
 
     virtual bool onInit() = 0;
-    virtual void onUserInputEvent(int eventType, int button, int mouseX, int mouseY, float secPerFrame) = 0;
+    virtual void onUserInputEvent(int eventType, const unsigned char *, int mouseX, int mouseY, float secPerFrame) = 0;
 
     virtual bool drawPoint(int x, int y, Color color = {0xFF, 0xFF, 0xFF});
 
