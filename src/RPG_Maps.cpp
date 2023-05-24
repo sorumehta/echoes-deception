@@ -7,7 +7,7 @@
 #include <map>
 #include <utility>
 
-cMap::cMap() {
+cMap::cMap(SDL_Renderer *r): renderer(r) {
     nWidth = 0;
     nHeight = 0;
     aIndices = nullptr;
@@ -51,7 +51,7 @@ bool cMap::Create(const std::string& fileData, std::vector<LTexture *> spriteLis
     return false;
 }
 
-cMap_Village::cMap_Village() {
+cMap_Village::cMap_Village(SDL_Renderer* renderer): cMap(renderer) {
     std::string basePath = "../res/graphics/";
     std::string spriteMap[30];
     spriteMap[0] = basePath + "water.png";
@@ -88,7 +88,7 @@ cMap_Village::cMap_Village() {
     std::vector<LTexture *> vSpritelist;
     for (const auto & spritePath : spriteMap){
         LTexture *spr = new LTexture();
-        spr->loadTextureFromFile(spritePath);
+        spr->loadTextureFromFile(renderer, spritePath);
         vSpritelist.emplace_back(spr);
     }
 

@@ -12,6 +12,7 @@ private:
     SDL_Rect spriteClips[4];
     float frame;
     LTexture texture;
+    SDL_Renderer *renderer = NULL;
 public:
     SDL_RendererFlip flipType;
     void initSpriteClips() {
@@ -36,8 +37,8 @@ public:
         spriteClips[3].h = 205;
     }
 
-    Player() {
-        texture.loadTextureFromFile("../res/graphics/man.png", true, {0, 0xFF, 0xFF});
+    Player(SDL_Renderer *renderer): renderer(renderer) {
+        texture.loadTextureFromFile(renderer, "../res/graphics/man.png", true, {0, 0xFF, 0xFF});
         initSpriteClips();
         frame = 0.0f;
         flipType = SDL_FLIP_NONE;
@@ -54,7 +55,7 @@ public:
         } else {
             currentClip = &spriteClips[0];
         }
-        texture.drawTexture(x, y, w, h, currentClip, 0,
+        texture.drawTexture(renderer, x, y, w, h, currentClip, 0,
                             NULL,
                             flipType);
 
@@ -102,18 +103,15 @@ public:
     }
 
     bool onInit() override {
-        player = new Player();
+        player = new Player(mRenderer);
         nTileWidth = 24;
         nTileHeight = 24;
-        pCurrentMap = new cMap_Village();
+        pCurrentMap = new cMap_Village(mRenderer);
         return true;
     }
 
 
     bool onFrameUpdate(float fElapsedTime) override {
-
-
-
         // clamp velocities
         if (fPlayerVelY > 10) {
             fPlayerVelY = 10.0f;
@@ -201,7 +199,7 @@ public:
             for (int y = -1; y < nVisibleTilesY + 1; y++) {
                 int spriteIdx = pCurrentMap->GetIndex(x + static_cast<int>(fOffsetX), y + static_cast<int>(fOffsetY));
                 LTexture *texture = pCurrentMap->vSprites[spriteIdx];
-                texture->drawTexture(static_cast<int>((x - fTileOffsetX) * nTileWidth),
+                texture->drawTexture(mRenderer, static_cast<int>((x - fTileOffsetX) * nTileWidth),
                                      static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth, nTileHeight);
             }
         }

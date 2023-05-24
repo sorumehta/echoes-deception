@@ -1,14 +1,6 @@
 #include "SimpleGameEngine.hpp"
 #include <cmath>
 
-const int FONT_SIZE = 18;
-//const int FONT_WIDTH = 10;
-//const int FONT_HEIGHT = 18;
-
-SDL_Renderer *gRenderer = nullptr;
-TTF_Font *gFont = NULL;
-//The music that will be played
-Mix_Music *gMusic = NULL;
 
 LTexture::LTexture() {
     mTexture = nullptr;
@@ -20,7 +12,7 @@ int LTexture::getHeight() const { return mHeight; }
 
 int LTexture::getWidth() const { return mWidth; }
 
-void LTexture::drawTexture(int x, int y, int w, int h, SDL_Rect *clip, double angle, SDL_Point *center,
+void LTexture::drawTexture(SDL_Renderer *renderer, int x, int y, int w, int h, SDL_Rect *clip, double angle, SDL_Point *center,
                            SDL_RendererFlip flip) {
     //Set rendering space and render to screen
     SDL_Rect renderQuad = {x, y, mWidth, mHeight};
@@ -37,7 +29,7 @@ void LTexture::drawTexture(int x, int y, int w, int h, SDL_Rect *clip, double an
     }
 
     //Render to screen
-    SDL_RenderCopyEx(gRenderer, mTexture, clip, &renderQuad, angle, center, flip);
+    SDL_RenderCopyEx(renderer, mTexture, clip, &renderQuad, angle, center, flip);
 }
 
 void LTexture::free() {
@@ -54,7 +46,7 @@ LTexture::~LTexture() {
     free();
 }
 
-bool LTexture::loadTextureFromText(const std::string &text, SDL_Color color) {
+bool LTexture::loadTextureFromText(SDL_Renderer *renderer,TTF_Font *font, const std::string &text, SDL_Color color) {
     if (text.length() == 0) {
         // nothing to render
         return true;
@@ -62,12 +54,12 @@ bool LTexture::loadTextureFromText(const std::string &text, SDL_Color color) {
     //free existing texture
     free();
 
-    SDL_Surface *textSurface = TTF_RenderUTF8_Solid_Wrapped(gFont, text.c_str(), color, 0);
+    SDL_Surface *textSurface = TTF_RenderUTF8_Solid_Wrapped(font, text.c_str(), color, 0);
     if (textSurface == nullptr) {
         std::cout << "Unable to render text surface! SDL_ttf Error: " << TTF_GetError() << std::endl;
         return false;
     }
-    mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
+    mTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
     if (mTexture == nullptr) {
         std::cout << "Unable to create texture from rendered text! SDL Error:" << SDL_GetError() << std::endl;
         return false;
@@ -78,7 +70,7 @@ bool LTexture::loadTextureFromText(const std::string &text, SDL_Color color) {
     return true;
 }
 
-bool LTexture::loadTextureFromFile(std::string path, bool toColorKey, SDL_Color colorKey) {
+bool LTexture::loadTextureFromFile(SDL_Renderer *renderer, std::string path, bool toColorKey, SDL_Color colorKey) {
 
     //Get rid of preexisting texture
     free();
@@ -98,7 +90,7 @@ bool LTexture::loadTextureFromFile(std::string path, bool toColorKey, SDL_Color 
 
 
         //Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+        newTexture = SDL_CreateTextureFromSurface(renderer, loadedSurface);
         if (newTexture == NULL) {
             std::cout << "Unable to create texture from" << path << "SDL Error: %s\n" << SDL_GetError() << std::endl;
         } else {
@@ -122,7 +114,7 @@ void LTexture::setColorMod(SDL_Color color) {
 }
 
 
-GameEngine::GameEngine() : mWindowWidth(80), mWindowHeight(40), gWindow(nullptr) {
+GameEngine::GameEngine() : mWindowWidth(80), mWindowHeight(40), mWindow(NULL), mRenderer(NULL), mFont(NULL), mMusic(NULL), FONT_SIZE(18) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         std::cout << "SDL initialization failed: " << SDL_GetError();
     }
@@ -160,19 +152,19 @@ bool GameEngine::constructConsole(int windowWidth = 80, int windowHeight = 40, c
         std::cout << "maxWidth = " << maxWidth << ", maxHeight = " << maxHeight << std::endl;
         return false;
     }
-    gWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+    mWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                                windowWidth, windowHeight, SDL_WINDOW_SHOWN); // 5 margin
-    if (gWindow == nullptr) {
+    if (mWindow == nullptr) {
         std::cout << "Window could not be created! SDL Error: " << SDL_GetError();
         return false;
     }
 
-    gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (gRenderer == nullptr) {
+    mRenderer = SDL_CreateRenderer(mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (mRenderer == nullptr) {
         std::cout << "Renderer could not be created! SDL Error: " << SDL_GetError();
         return false;
     }
-    SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(mRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 
     mWindowWidth = windowWidth;
     mWindowHeight = windowHeight;
@@ -181,8 +173,8 @@ bool GameEngine::constructConsole(int windowWidth = 80, int windowHeight = 40, c
 }
 
 bool GameEngine::createResources() {
-    gFont = TTF_OpenFont("../res/Roboto-Black.ttf", FONT_SIZE);
-    if (gFont == nullptr) {
+    mFont = TTF_OpenFont("../res/Roboto-Black.ttf", FONT_SIZE);
+    if (mFont == nullptr) {
         std::cout << "Failed to load font! SDL_ttf Error: " << TTF_GetError();
         return false;
     }
@@ -191,8 +183,8 @@ bool GameEngine::createResources() {
 
 
 bool GameEngine::loadMusic(const char *path) {
-    gMusic = Mix_LoadMUS( path);
-    if (gMusic == NULL) {
+    mMusic = Mix_LoadMUS( path);
+    if (mMusic == NULL) {
         std::cout << "Failed to load beat music! SDL_mixer Error: %s\n" << Mix_GetError() << std::endl;
         return false;
     }
@@ -201,35 +193,35 @@ bool GameEngine::loadMusic(const char *path) {
 
 
 bool GameEngine::renderConsole() {
-    if (gRenderer == nullptr) {
+    if (mRenderer == NULL) {
         std::cout << "Renderer is not initialised. Perhaps you forgot to call constructConsole?" << std::endl;
         return false;
     }
     //update screen
-    SDL_RenderPresent(gRenderer);
+    SDL_RenderPresent(mRenderer);
     return true;
 }
 
 bool GameEngine::drawLine(int x1, int y1, int x2, int y2, Color color) {
-    SDL_SetRenderDrawColor(gRenderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
-    if (SDL_RenderDrawLine(gRenderer, x1, y1, x2, y2) != 0) {
+    SDL_SetRenderDrawColor(mRenderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
+    if (SDL_RenderDrawLine(mRenderer, x1, y1, x2, y2) != 0) {
         return false;
     }
     return true;
 }
 
 bool GameEngine::drawPoint(int x, int y, Color color) {
-    SDL_SetRenderDrawColor(gRenderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
-    if (SDL_RenderDrawPoint(gRenderer, x, y) != 0) {
+    SDL_SetRenderDrawColor(mRenderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
+    if (SDL_RenderDrawPoint(mRenderer, x, y) != 0) {
         return false;
     }
     return true;
 }
 
 bool GameEngine::fillRect(int x, int y, int w, int h, Color color) {
-    SDL_SetRenderDrawColor(gRenderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(mRenderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
     const SDL_Rect rect = {x, y, w, h};
-    if (SDL_RenderFillRect(gRenderer, &rect) != 0){
+    if (SDL_RenderFillRect(mRenderer, &rect) != 0){
         return false;
     }
     return true;
@@ -237,13 +229,13 @@ bool GameEngine::fillRect(int x, int y, int w, int h, Color color) {
 
 void GameEngine::close_sdl() {
     //Free the music
-    Mix_FreeMusic( gMusic );
-    gMusic = NULL;
+    Mix_FreeMusic( mMusic );
+    mMusic = NULL;
     //Destroy window
-    SDL_DestroyRenderer(gRenderer);
-    SDL_DestroyWindow(gWindow);
-    gWindow = nullptr;
-    gRenderer = nullptr;
+    SDL_DestroyRenderer(mRenderer);
+    SDL_DestroyWindow(mWindow);
+    mWindow = NULL;
+    mRenderer = NULL;
 
     //Quit SDL subsystems
     SDL_Quit();
@@ -251,8 +243,8 @@ void GameEngine::close_sdl() {
 
 void GameEngine::initScreen() {
     //clear screen
-    SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(gRenderer);
+    SDL_SetRenderDrawColor(mRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(mRenderer);
 }
 
 void GameEngine::startGameLoop() {
@@ -360,7 +352,7 @@ bool GameEngine::playMusic() {
     if( Mix_PlayingMusic() == 0 )
     {
         //Play the music
-        Mix_PlayMusic( gMusic, -1 );
+        Mix_PlayMusic( mMusic, -1 );
     }
 }
 

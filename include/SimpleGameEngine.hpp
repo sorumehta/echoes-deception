@@ -20,11 +20,11 @@ public:
 
     ~LTexture();
 
-    bool loadTextureFromText(const std::string &text, SDL_Color color);
+    bool loadTextureFromText(SDL_Renderer *renderer,TTF_Font *font, const std::string &text, SDL_Color color);
 
-    bool loadTextureFromFile(std::string path, bool toColorKey = false, SDL_Color colorKey = {0,0,0});
+    bool loadTextureFromFile(SDL_Renderer *renderer, std::string path, bool toColorKey = false, SDL_Color colorKey = {0,0,0});
 
-    void drawTexture(int x, int y, int w = 0, int h = 0, SDL_Rect *clip = NULL,
+    void drawTexture(SDL_Renderer *renderer, int x, int y, int w = 0, int h = 0, SDL_Rect *clip = NULL,
                      double angle = 0.0, SDL_Point *center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
     void setColorMod(SDL_Color color);
 
@@ -46,11 +46,15 @@ class GameEngine {
 protected:
     int mWindowWidth;
     int mWindowHeight;
-    SDL_Event e;
+    SDL_Window *mWindow;
+    SDL_Renderer *mRenderer;
+    TTF_Font *mFont;
+    Mix_Music *mMusic;
+    int FONT_SIZE;
+
 private:
     void initScreen();
 
-    SDL_Window *gWindow = nullptr;
 public:
     GameEngine();
 
