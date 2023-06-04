@@ -71,7 +71,7 @@ public:
     void DrawWireFrameModel(const std::vector<std::pair<float, float>> &vecModelCoordinates, float x, float y,
                             float r = 0.0f, float s = 1.0f, Color color = {0xFF, 0xFF, 0xFF});
 
-    bool constructConsole(int nCharsX, int nCharsY, const char *title);
+    bool init(int nCharsX, int nCharsY, const char *title);
 
     bool createResources();
 

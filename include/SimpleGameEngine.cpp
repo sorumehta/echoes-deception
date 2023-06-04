@@ -138,11 +138,12 @@ GameEngine::GameEngine() : mWindowWidth(80), mWindowHeight(40), mWindow(NULL), m
     }
 }
 
+
 GameEngine::~GameEngine() {
     close_sdl();
 }
 
-bool GameEngine::constructConsole(int windowWidth = 80, int windowHeight = 40, const char *title = "Window") {
+bool GameEngine::init(int windowWidth = 80, int windowHeight = 40, const char *title = "Window") {
     SDL_DisplayMode DM;
     SDL_GetCurrentDisplayMode(0, &DM);
     int maxWidth = DM.w;

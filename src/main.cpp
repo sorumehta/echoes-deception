@@ -6,58 +6,61 @@
 
 const float PI = 3.14159f;
 
+
+enum FlipType {
+    DOWN, RIGHT, UP, LEFT
+};
+
 class Player {
 private:
-
-    SDL_Rect spriteClips[4];
+    SDL_Rect spriteClips[12];
     float frame;
     LTexture texture;
     SDL_Renderer *renderer = NULL;
 public:
-    SDL_RendererFlip flipType;
+    FlipType flipType;
+
     void initSpriteClips() {
-        spriteClips[0].x = 0;
-        spriteClips[0].y = 0;
-        spriteClips[0].w = 64;
-        spriteClips[0].h = 205;
-
-        spriteClips[1].x = 64;
-        spriteClips[1].y = 0;
-        spriteClips[1].w = 64;
-        spriteClips[1].h = 205;
-
-        spriteClips[2].x = 128;
-        spriteClips[2].y = 0;
-        spriteClips[2].w = 64;
-        spriteClips[2].h = 205;
-
-        spriteClips[3].x = 192;
-        spriteClips[3].y = 0;
-        spriteClips[3].w = 64;
-        spriteClips[3].h = 205;
+//        spriteClips[0].x = 0;
+//        spriteClips[0].y = 0;
+//        spriteClips[0].w = 64;
+//        spriteClips[0].h = 205;
+        int sprWidth = 42;
+        int sprHeight = 36;
+        for(int i = 0; i < 4; i++){
+            for(int j=0; j < 3; j++){
+                int idx = i * 3 + j;
+                spriteClips[idx].x = j * sprWidth;
+                spriteClips[idx].y = i * sprHeight;
+                spriteClips[idx].w = sprWidth;
+                spriteClips[idx].h = sprHeight;
+            }
+        }
     }
 
-    Player(SDL_Renderer *renderer): renderer(renderer) {
-        texture.loadTextureFromFile(renderer, "../res/graphics/man.png", true, {0, 0xFF, 0xFF});
+    Player(SDL_Renderer *renderer) : renderer(renderer) {
+        texture.loadTextureFromFile(renderer, "../res/graphics/main_guy.png", true, {0, 0xFF, 0xFF});
+        std::cout << "height: " << texture.getHeight() << ", width: " << texture.getWidth() << std::endl;
+        // sprite height = 144/4 = 36
+        // sprite width = 124/3 = 41
+        // 4 rows, 3 sprites per row
         initSpriteClips();
         frame = 0.0f;
-        flipType = SDL_FLIP_NONE;
+        flipType = DOWN;
     }
 
     void drawPlayer(int x, int y, int w, int h, bool changeFrame, float fSecElapsed) {
         SDL_Rect *currentClip = nullptr;
         if (changeFrame) {
-            currentClip = &spriteClips[static_cast<int>(frame)];
-            frame += 10*fSecElapsed;
-            if (frame >= 4.0f) {
+            currentClip = &spriteClips[static_cast<int>(flipType*3 + frame)];
+            frame += 10 * fSecElapsed;
+            if (frame >= 3.0f) {
                 frame = 0.0f;
             }
         } else {
             currentClip = &spriteClips[0];
         }
-        texture.drawTexture(renderer, x, y, w, h, currentClip, 0,
-                            NULL,
-                            flipType);
+        texture.drawTexture(renderer, x, y, w, h, currentClip);
 
     }
 };
@@ -77,29 +80,30 @@ private:
     int nTileHeight{};
 
 public:
-    void onUserInputEvent(int eventType, const unsigned char *state, int mouseX, int mouseY, float secPerFrame) override {
-            if (state[SDL_SCANCODE_UP]) {
-                fPlayerVelY += -10.0f * secPerFrame;
-            }
-            if (state[SDL_SCANCODE_DOWN]) {
-                fPlayerVelY += 10.0f * secPerFrame;
-            }
-            if (state[SDL_SCANCODE_LEFT]) {
-                fPlayerVelX += -10.0f * secPerFrame;
-                player->flipType = SDL_FLIP_NONE;
-            }
-            if (state[SDL_SCANCODE_RIGHT]) {
-                fPlayerVelX += 10.0f * secPerFrame;
-                player->flipType = SDL_FLIP_HORIZONTAL;
+    void
+    onUserInputEvent(int eventType, const unsigned char *state, int mouseX, int mouseY, float secPerFrame) override {
+        if (state[SDL_SCANCODE_UP]) {
+            fPlayerVelY += -10.0f * secPerFrame;
+            player->flipType = UP;
+        }
+        if (state[SDL_SCANCODE_DOWN]) {
+            fPlayerVelY += 10.0f * secPerFrame;
+            player->flipType = DOWN;
+        }
+        if (state[SDL_SCANCODE_LEFT]) {
+            fPlayerVelX += -10.0f * secPerFrame;
+            player->flipType = LEFT;
+        }
+        if (state[SDL_SCANCODE_RIGHT]) {
+            fPlayerVelX += 10.0f * secPerFrame;
+            player->flipType = RIGHT;
 
+        }
+        if (state[SDL_SCANCODE_SPACE]) {
+            if (fPlayerVelY == 0) {
+                fPlayerVelY = -10.0f;
             }
-            if (state[SDL_SCANCODE_SPACE]) {
-                if (fPlayerVelY == 0) {
-                    fPlayerVelY = -10.0f;
-                }
-
-            }
-
+        }
     }
 
     bool onInit() override {
@@ -159,17 +163,16 @@ public:
                 fPlayerVelY = 0;
             }
         }
-
         fPlayerPosX = fNewPlayerPosX;
         fPlayerPosY = fNewPlayerPosY;
 
         // apply friction
         fPlayerVelX += -4.0f * fPlayerVelX * fElapsedTime;
-        if(std::abs(fPlayerVelX) < 0.01f){
+        if (std::abs(fPlayerVelX) < 0.01f) {
             fPlayerVelX = 0.0f;
         }
         fPlayerVelY += -4.0f * fPlayerVelY * fElapsedTime;
-        if(std::abs(fPlayerVelY) < 0.01f){
+        if (std::abs(fPlayerVelY) < 0.01f) {
             fPlayerVelY = 0.0f;
         }
 
@@ -205,20 +208,19 @@ public:
         }
         // draw player
         bool bWalkingAnimation = false;
-        if (std::abs(fPlayerVelX) > 0.3 || std::abs(fPlayerVelY) > 0.3){
+        if (std::abs(fPlayerVelX) > 0.3 || std::abs(fPlayerVelY) > 0.3) {
             bWalkingAnimation = true;
         }
         player->drawPlayer(static_cast<int>((fPlayerPosX - fOffsetX) * nTileWidth),
-                          static_cast<int>((fPlayerPosY - fOffsetY) * nTileHeight), nTileWidth, nTileHeight, bWalkingAnimation, fElapsedTime);
-
+                           static_cast<int>((fPlayerPosY - fOffsetY) * nTileHeight), nTileWidth, nTileHeight,
+                           bWalkingAnimation, fElapsedTime);
         return true;
     }
-
 };
 
 int main() {
     Echoes echoes;
-    echoes.constructConsole(30 * 24, 16 * 24, "Echoes Of Deception");
+    echoes.init(30 * 24, 16 * 24, "Echoes Of Deception");
     echoes.startGameLoop();
     return 0;
 }
