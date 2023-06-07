@@ -21,10 +21,6 @@ public:
     FlipType flipType;
 
     void initSpriteClips() {
-//        spriteClips[0].x = 0;
-//        spriteClips[0].y = 0;
-//        spriteClips[0].w = 64;
-//        spriteClips[0].h = 205;
         int sprWidth = 42;
         int sprHeight = 36;
         for(int i = 0; i < 4; i++){
@@ -40,10 +36,6 @@ public:
 
     Player(SDL_Renderer *renderer) : renderer(renderer) {
         texture.loadTextureFromFile(renderer, "../res/graphics/main_guy.png", true, {0, 0xFF, 0xFF});
-        std::cout << "height: " << texture.getHeight() << ", width: " << texture.getWidth() << std::endl;
-        // sprite height = 144/4 = 36
-        // sprite width = 124/3 = 41
-        // 4 rows, 3 sprites per row
         initSpriteClips();
         frame = 0.0f;
         flipType = DOWN;
@@ -61,7 +53,6 @@ public:
             currentClip = &spriteClips[0];
         }
         texture.drawTexture(renderer, x, y, w, h, currentClip);
-
     }
 };
 
