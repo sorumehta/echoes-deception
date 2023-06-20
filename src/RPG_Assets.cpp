@@ -14,6 +14,7 @@ RPG_Assets &RPG_Assets::get() {
 
 RPG_Assets::RPG_Assets() {
     mSprNames[0] = "main_guy";
+    mSprNames[1] = "village_man";
     mSprNames[6] = "house/9";
     mSprNames[7] = "house/8";
     mSprNames[8] = "house/7";
@@ -29,9 +30,7 @@ RPG_Assets::RPG_Assets() {
     mSprNames[29] = "pave";
 }
 
-RPG_Assets::~RPG_Assets() {
-
-}
+RPG_Assets::~RPG_Assets() = default;
 
 
 
@@ -49,6 +48,9 @@ void RPG_Assets::loadSprites() {
             LTexture *texture = new LTexture();
             std::string filePath = basePath + spriteName + ".png";
             texture->loadTextureFromFile(filePath);
+            if(spriteName == "village_man"){
+                std::cout << "village man width: " << texture->getWidth() << ", height: " << texture->getHeight() << std::endl;
+            }
             vSprites.emplace_back(texture);
         }
 

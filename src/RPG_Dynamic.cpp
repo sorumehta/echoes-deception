@@ -8,8 +8,11 @@ RPG_Dynamic::RPG_Dynamic(std::string name) : sName(name), px(0), py(0), vx(0), v
                                              bSolidVsDyn(true), bFriendly(true) {}
 
 
-DynamicCreature::DynamicCreature(std::string name, LTexture *spr): RPG_Dynamic(name) {
+DynamicCreature::DynamicCreature(std::string name, LTexture *spr, int sprW, int sprH, int nSpritesInARow): RPG_Dynamic(name) {
     mSprite = spr;
+    sprWidth = sprW;
+    sprHeight = sprH;
+    nSpritesInDirection = nSpritesInARow;
     health = 10;
     healthMax = 10;
     mFacingDirection = SOUTH;
