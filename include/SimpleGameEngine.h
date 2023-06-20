@@ -20,11 +20,11 @@ public:
 
     ~LTexture();
 
-    bool loadTextureFromText(SDL_Renderer *renderer,TTF_Font *font, const std::string &text, SDL_Color color);
+    bool loadTextureFromText(TTF_Font *font, const std::string &text, SDL_Color color);
 
-    bool loadTextureFromFile(SDL_Renderer *renderer, std::string path, bool toColorKey = false, SDL_Color colorKey = {0,0,0});
+    bool loadTextureFromFile(std::string path, bool toColorKey = false, SDL_Color colorKey = {0,0,0});
 
-    void drawTexture(SDL_Renderer *renderer, int x, int y, int w = 0, int h = 0, SDL_Rect *clip = NULL,
+    void drawTexture(int x, int y, int w = 0, int h = 0, SDL_Rect *clip = NULL,
                      double angle = 0.0, SDL_Point *center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
     void setColorMod(SDL_Color color);
 
@@ -43,21 +43,23 @@ struct Color {
 
 
 class GameEngine {
+private:
+    static SDL_Window *mWindow;
+    static SDL_Renderer *mRenderer;
+    static TTF_Font *mFont;
+    void initScreen();
 protected:
     int mWindowWidth;
     int mWindowHeight;
-    SDL_Window *mWindow;
-    SDL_Renderer *mRenderer;
-    TTF_Font *mFont;
+
     Mix_Music *mMusic;
     int FONT_SIZE;
 
-private:
-    void initScreen();
-
 public:
     GameEngine();
-
+    static SDL_Window *getWindow();
+    static SDL_Renderer *getRenderer();
+    static TTF_Font *getFont();
     virtual bool onFrameUpdate(float fElapsedTime) = 0;
 
     virtual bool onInit() = 0;

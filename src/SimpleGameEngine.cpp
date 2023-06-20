@@ -1,6 +1,9 @@
-#include "SimpleGameEngine.hpp"
+#include "SimpleGameEngine.h"
 #include <cmath>
 
+SDL_Window* GameEngine::mWindow = NULL;
+SDL_Renderer* GameEngine::mRenderer = NULL;
+TTF_Font* GameEngine::mFont = NULL;
 
 LTexture::LTexture() {
     mTexture = nullptr;
@@ -12,7 +15,7 @@ int LTexture::getHeight() const { return mHeight; }
 
 int LTexture::getWidth() const { return mWidth; }
 
-void LTexture::drawTexture(SDL_Renderer *renderer, int x, int y, int w, int h, SDL_Rect *clip, double angle, SDL_Point *center,
+void LTexture::drawTexture(int x, int y, int w, int h, SDL_Rect *clip, double angle, SDL_Point *center,
                            SDL_RendererFlip flip) {
     //Set rendering space and render to screen
     SDL_Rect renderQuad = {x, y, mWidth, mHeight};
@@ -29,7 +32,7 @@ void LTexture::drawTexture(SDL_Renderer *renderer, int x, int y, int w, int h, S
     }
 
     //Render to screen
-    SDL_RenderCopyEx(renderer, mTexture, clip, &renderQuad, angle, center, flip);
+    SDL_RenderCopyEx(GameEngine::getRenderer(), mTexture, clip, &renderQuad, angle, center, flip);
 }
 
 void LTexture::free() {
@@ -46,7 +49,7 @@ LTexture::~LTexture() {
     free();
 }
 
-bool LTexture::loadTextureFromText(SDL_Renderer *renderer,TTF_Font *font, const std::string &text, SDL_Color color) {
+bool LTexture::loadTextureFromText(TTF_Font *font, const std::string &text, SDL_Color color) {
     if (text.length() == 0) {
         // nothing to render
         return true;
@@ -59,7 +62,7 @@ bool LTexture::loadTextureFromText(SDL_Renderer *renderer,TTF_Font *font, const 
         std::cout << "Unable to render text surface! SDL_ttf Error: " << TTF_GetError() << std::endl;
         return false;
     }
-    mTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    mTexture = SDL_CreateTextureFromSurface(GameEngine::getRenderer(), textSurface);
     if (mTexture == nullptr) {
         std::cout << "Unable to create texture from rendered text! SDL Error:" << SDL_GetError() << std::endl;
         return false;
@@ -70,7 +73,7 @@ bool LTexture::loadTextureFromText(SDL_Renderer *renderer,TTF_Font *font, const 
     return true;
 }
 
-bool LTexture::loadTextureFromFile(SDL_Renderer *renderer, std::string path, bool toColorKey, SDL_Color colorKey) {
+bool LTexture::loadTextureFromFile(std::string path, bool toColorKey, SDL_Color colorKey) {
 
     //Get rid of preexisting texture
     free();
@@ -90,7 +93,7 @@ bool LTexture::loadTextureFromFile(SDL_Renderer *renderer, std::string path, boo
 
 
         //Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface(renderer, loadedSurface);
+        newTexture = SDL_CreateTextureFromSurface(GameEngine::getRenderer(), loadedSurface);
         if (newTexture == NULL) {
             std::cout << "Unable to create texture from" << path << "SDL Error: %s\n" << SDL_GetError() << std::endl;
         } else {
@@ -114,7 +117,7 @@ void LTexture::setColorMod(SDL_Color color) {
 }
 
 
-GameEngine::GameEngine() : mWindowWidth(80), mWindowHeight(40), mWindow(NULL), mRenderer(NULL), mFont(NULL), mMusic(NULL), FONT_SIZE(18) {
+GameEngine::GameEngine() : mWindowWidth(80), mWindowHeight(40), mMusic(NULL), FONT_SIZE(18) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         std::cout << "SDL initialization failed: " << SDL_GetError();
     }
@@ -359,4 +362,25 @@ bool GameEngine::playMusic() {
 
 bool GameEngine::stopMusic() {
     Mix_HaltMusic();
+}
+
+SDL_Window *GameEngine::getWindow() {
+    if (!mWindow) {
+        std::cout << "Error: Window not initialized!" << std::endl;
+    }
+    return mWindow;
+}
+
+SDL_Renderer *GameEngine::getRenderer() {
+    if (!mRenderer) {
+        std::cout << "Error: Renderer not initialized!" << std::endl;
+    }
+    return mRenderer;
+}
+
+TTF_Font *GameEngine::getFont() {
+    if (!mFont) {
+        std::cout << "Error: Window not initialized!" << std::endl;
+    }
+    return mFont;
 }

@@ -1,8 +1,9 @@
-#include "SimpleGameEngine.hpp"
+#include "SimpleGameEngine.h"
 #include <cmath>
 #include <list>
 #include <memory>
 #include "RPG_Maps.h"
+#include "RPG_Assets.h"
 
 const float PI = 3.14159f;
 
@@ -16,7 +17,6 @@ private:
     SDL_Rect spriteClips[12];
     float frame;
     LTexture texture;
-    SDL_Renderer *renderer = NULL;
 public:
     FlipType flipType;
 
@@ -34,8 +34,8 @@ public:
         }
     }
 
-    Player(SDL_Renderer *renderer) : renderer(renderer) {
-        texture.loadTextureFromFile(renderer, "../res/graphics/main_guy.png", true, {0, 0xFF, 0xFF});
+    Player() {
+        texture.loadTextureFromFile("../res/graphics/main_guy.png", true, {0, 0xFF, 0xFF});
         initSpriteClips();
         frame = 0.0f;
         flipType = DOWN;
@@ -52,7 +52,7 @@ public:
         } else {
             currentClip = &spriteClips[0];
         }
-        texture.drawTexture(renderer, x, y, w, h, currentClip);
+        texture.drawTexture(x, y, w, h, currentClip);
     }
 };
 
@@ -98,10 +98,11 @@ public:
     }
 
     bool onInit() override {
-        player = new Player(mRenderer);
+        RPG_Assets::get().loadSprites();
+        player = new Player();
         nTileWidth = 24;
         nTileHeight = 24;
-        pCurrentMap = new cMap_Village(mRenderer);
+        pCurrentMap = new cMap_Village();
         return true;
     }
 
@@ -192,8 +193,8 @@ public:
         for (int x = -1; x < nVisibleTilesX + 1; x++) {
             for (int y = -1; y < nVisibleTilesY + 1; y++) {
                 int spriteIdx = pCurrentMap->GetIndex(x + static_cast<int>(fOffsetX), y + static_cast<int>(fOffsetY));
-                LTexture *texture = pCurrentMap->vSprites[spriteIdx];
-                texture->drawTexture(mRenderer, static_cast<int>((x - fTileOffsetX) * nTileWidth),
+                LTexture *texture = RPG_Assets::get().getSprite(spriteIdx);
+                texture->drawTexture( static_cast<int>((x - fTileOffsetX) * nTileWidth),
                                      static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth, nTileHeight);
             }
         }
@@ -205,6 +206,10 @@ public:
         player->drawPlayer(static_cast<int>((fPlayerPosX - fOffsetX) * nTileWidth),
                            static_cast<int>((fPlayerPosY - fOffsetY) * nTileHeight), nTileWidth, nTileHeight,
                            bWalkingAnimation, fElapsedTime);
+
+        LTexture *font = new LTexture();
+        font->loadTextureFromText(getFont(), "Hello, everyone!", {0xFF, 0xFF, 0xFF});
+        font->drawTexture((mWindowWidth/2 - font->getWidth())/2, mWindowHeight/2 - 20  );
         return true;
     }
 };
