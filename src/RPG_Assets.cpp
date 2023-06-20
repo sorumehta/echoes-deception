@@ -29,9 +29,7 @@ RPG_Assets::RPG_Assets() {
 }
 
 RPG_Assets::~RPG_Assets() {
-    for (auto spr : vSprites){
-        delete spr;
-    }
+
 }
 
 
@@ -39,17 +37,20 @@ RPG_Assets::~RPG_Assets() {
 void RPG_Assets::loadSprites() {
 
     std::string basePath = "../res/graphics/";
+
+    LTexture *defaultTexture = new LTexture();
+    defaultTexture->loadTextureFromFile(basePath + "water.png");
     for (const auto & spriteName : mSprNames){
-        LTexture *texture = new LTexture();
-        std::string filePath;
         if(spriteName.empty()){
-            filePath = basePath + "default.png";
+            vSprites.emplace_back(defaultTexture);
         }
         else{
-            filePath = basePath + spriteName + ".png";
+            LTexture *texture = new LTexture();
+            std::string filePath = basePath + spriteName + ".png";
+            texture->loadTextureFromFile(filePath);
+            vSprites.emplace_back(texture);
         }
-        texture->loadTextureFromFile(filePath);
-        vSprites.emplace_back(texture);
+
     }
 
 }
