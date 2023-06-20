@@ -7,7 +7,7 @@
 class RPG_Dynamic {
 public:
     RPG_Dynamic(std::string name);
-    ~RPG_Dynamic();
+//    ~RPG_Dynamic();
 
     float px, py;
     float vx, vy;

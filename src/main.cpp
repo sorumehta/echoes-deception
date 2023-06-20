@@ -4,14 +4,10 @@
 #include "RPG_Maps.h"
 #include "RPG_Assets.h"
 #include "RPG_Dynamic.h"
+#include "RPG_Commands.h"
 
-const float PI = 3.14159f;
 
-
-enum FlipType {
-    DOWN, RIGHT, UP, LEFT
-};
-
+#define ASSETS RPG_Assets::get()
 
 class Echoes : public GameEngine {
 private:
@@ -23,10 +19,13 @@ private:
 
     int nTileWidth{};
     int nTileHeight{};
-
+    ScriptProcessor mScript;
 public:
     void onUserInputEvent(int eventType, const unsigned char *state, int mouseX,
                           int mouseY, float secPerFrame) override {
+        if(!mScript.bUserControlEnabled){
+            return;
+        }
         if (state[SDL_SCANCODE_UP]) {
             player->vy -= 10.0f * secPerFrame;
         }
@@ -39,11 +38,17 @@ public:
         if (state[SDL_SCANCODE_RIGHT]) {
             player->vx += 10.0f * secPerFrame;
         }
+        if (state[SDL_SCANCODE_Z]){
+            mScript.addCommand(new Command_MoveTo(player, 10, 10, 3));
+            mScript.addCommand(new Command_MoveTo(player, 15, 10, 3));
+            mScript.addCommand(new Command_MoveTo(player, 15, 15, 3));
+            mScript.addCommand(new Command_MoveTo(player, 10, 10, 3));
+        }
     }
 
     bool onInit() override {
-        RPG_Assets::get().loadSprites();
-        player = new DynamicCreature("player", RPG_Assets::get().getSprite(0));
+        ASSETS.loadSprites();
+        player = new DynamicCreature("player", ASSETS.getSprite(0));
         player->px = 10;
         player->py = 10;
         nTileWidth = 24;
@@ -54,6 +59,8 @@ public:
 
 
     bool onFrameUpdate(float fElapsedTime) override {
+        mScript.processCommand(fElapsedTime);
+
         // clamp velocities
         if (player->vy > 10) {
             player->vy = 10.0f;
@@ -140,7 +147,7 @@ public:
         for (int x = -1; x < nVisibleTilesX + 1; x++) {
             for (int y = -1; y < nVisibleTilesY + 1; y++) {
                 int spriteIdx = pCurrentMap->GetIndex(x + static_cast<int>(fOffsetX), y + static_cast<int>(fOffsetY));
-                LTexture *texture = RPG_Assets::get().getSprite(spriteIdx);
+                LTexture *texture = ASSETS.getSprite(spriteIdx);
                 texture->drawTexture( static_cast<int>((x - fTileOffsetX) * nTileWidth),
                                      static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth, nTileHeight);
             }
