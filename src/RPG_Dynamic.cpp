@@ -15,31 +15,52 @@ DynamicCreature::DynamicCreature(std::string name, LTexture *spr): RPG_Dynamic(n
     mFacingDirection = SOUTH;
     mGraphicState = STANDING;
     mTimer = 0.0f;
+    mGraphicCounter = 0;
 }
 
-void DynamicCreature::drawSelf(GameEngine *engine, float fOffsetX, float fOffsetY) {
+void DynamicCreature::drawSelf(GameEngine *engine, float fOffsetX, float fOffsetY, int nTileWidth, int nTileHeight) {
+    int nSheetOffsetX = 0;
+    int nSheetOffsetY = 0;
 
+    switch (mGraphicState) {
+        case WALKING:
+        {
+            nSheetOffsetY = mFacingDirection * sprHeight;
+            nSheetOffsetX = mGraphicCounter * sprWidth;
+        }
+        break;
+    }
+    SDL_Rect clip;
+    clip.x = nSheetOffsetX;
+    clip.y = nSheetOffsetY;
+    clip.w = sprWidth;
+    clip.h = sprHeight;
+    mSprite->drawTexture((px - fOffsetX)*nTileWidth, (py - fOffsetY)*nTileHeight, nTileWidth, nTileHeight, &clip);
 }
 
 
 void DynamicCreature::update(float fElapsedTime) {
     mTimer += fElapsedTime;
     if (mTimer >= 0.2f){
-        mTimer -= -0.2f;
+        mTimer = 0.0f;
+        mGraphicCounter += 1;
+        mGraphicCounter %= nSpritesInDirection;
     }
-    if(std::fabs(vx) > 0 || std::fabs(vy) > 0){
+    if(std::fabs(vx) > 0 || std::fabs(vy) > 0.05){
         mGraphicState = WALKING;
+    } else {
+        mGraphicState = STANDING;
     }
     if(health <= 0){
         mGraphicState = DEAD;
     }
-    if(vx > 0.1f){
+    if(vx > 0.05f){
         mFacingDirection = EAST;
-    } else if(vx < -0.1f){
+    } else if(vx < -0.05f){
         mFacingDirection = WEST;
-    } else if(vy > 0.1f){
+    } else if(vy > 0.05f){
         mFacingDirection = SOUTH;
-    } else if (vy < -0.1f){
+    } else if (vy < -0.05f){
         mFacingDirection = NORTH;
     }
 }

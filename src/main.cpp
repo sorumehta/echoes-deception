@@ -1,9 +1,9 @@
 #include "SimpleGameEngine.h"
 #include <cmath>
-#include <list>
 #include <memory>
 #include "RPG_Maps.h"
 #include "RPG_Assets.h"
+#include "RPG_Dynamic.h"
 
 const float PI = 3.14159f;
 
@@ -12,94 +12,40 @@ enum FlipType {
     DOWN, RIGHT, UP, LEFT
 };
 
-class Player {
-private:
-    SDL_Rect spriteClips[12];
-    float frame;
-    LTexture texture;
-public:
-    FlipType flipType;
-
-    void initSpriteClips() {
-        int sprWidth = 42;
-        int sprHeight = 36;
-        for(int i = 0; i < 4; i++){
-            for(int j=0; j < 3; j++){
-                int idx = i * 3 + j;
-                spriteClips[idx].x = j * sprWidth;
-                spriteClips[idx].y = i * sprHeight;
-                spriteClips[idx].w = sprWidth;
-                spriteClips[idx].h = sprHeight;
-            }
-        }
-    }
-
-    Player() {
-        texture.loadTextureFromFile("../res/graphics/main_guy.png", true, {0, 0xFF, 0xFF});
-        initSpriteClips();
-        frame = 0.0f;
-        flipType = DOWN;
-    }
-
-    void drawPlayer(int x, int y, int w, int h, bool changeFrame, float fSecElapsed) {
-        SDL_Rect *currentClip = nullptr;
-        if (changeFrame) {
-            currentClip = &spriteClips[static_cast<int>(flipType*3 + frame)];
-            frame += 10 * fSecElapsed;
-            if (frame >= 3.0f) {
-                frame = 0.0f;
-            }
-        } else {
-            currentClip = &spriteClips[0];
-        }
-        texture.drawTexture(x, y, w, h, currentClip);
-    }
-};
 
 class Echoes : public GameEngine {
 private:
     cMap *pCurrentMap = nullptr;
-    Player *player = nullptr;
+    RPG_Dynamic *player = nullptr;
     // positions in tiles space
     float fCameraPosX = 0.0f;
     float fCameraPosY = 0.0f;
-    float fPlayerPosX = 10.0f;
-    float fPlayerPosY = 10.0f;
-    float fPlayerVelX{};
-    float fPlayerVelY{};
+
     int nTileWidth{};
     int nTileHeight{};
 
 public:
-    void
-    onUserInputEvent(int eventType, const unsigned char *state, int mouseX, int mouseY, float secPerFrame) override {
+    void onUserInputEvent(int eventType, const unsigned char *state, int mouseX,
+                          int mouseY, float secPerFrame) override {
         if (state[SDL_SCANCODE_UP]) {
-            fPlayerVelY += -10.0f * secPerFrame;
-            player->flipType = UP;
+            player->vy -= 10.0f * secPerFrame;
         }
         if (state[SDL_SCANCODE_DOWN]) {
-            fPlayerVelY += 10.0f * secPerFrame;
-            player->flipType = DOWN;
+            player->vy += 10.0f * secPerFrame;
         }
         if (state[SDL_SCANCODE_LEFT]) {
-            fPlayerVelX += -10.0f * secPerFrame;
-            player->flipType = LEFT;
+            player->vx -= 10.0f * secPerFrame;
         }
         if (state[SDL_SCANCODE_RIGHT]) {
-            fPlayerVelX += 10.0f * secPerFrame;
-            player->flipType = RIGHT;
-
-        }
-        if (state[SDL_SCANCODE_SPACE]) {
-            if (fPlayerVelY == 0) {
-                fPlayerVelY = -10.0f;
-            }
+            player->vx += 10.0f * secPerFrame;
         }
     }
 
     bool onInit() override {
         RPG_Assets::get().loadSprites();
-        player = new Player();
+        player = new DynamicCreature("player", RPG_Assets::get().getSprite(0));
+        player->px = 10;
+        player->py = 10;
         nTileWidth = 24;
         nTileHeight = 24;
         pCurrentMap = new cMap_Village();
@@ -109,67 +55,68 @@ public:
 
     bool onFrameUpdate(float fElapsedTime) override {
         // clamp velocities
-        if (fPlayerVelY > 10) {
-            fPlayerVelY = 10.0f;
+        if (player->vy > 10) {
+            player->vy = 10.0f;
         }
-        if (fPlayerVelY < -10) {
-            fPlayerVelY = -10.0f;
+        if (player->vy < -10) {
+            player->vy = -10.0f;
         }
-        if (fPlayerVelX > 10) {
-            fPlayerVelX = 10.0f;
+        if (player->vx > 10) {
+            player->vx = 10.0f;
         }
-        if (fPlayerVelX < -10) {
-            fPlayerVelX = -10.0f;
+        if (player->vx < -10) {
+            player->vx = -10.0f;
         }
 
-        float fNewPlayerPosX = fPlayerPosX + fPlayerVelX * fElapsedTime;
-        float fNewPlayerPosY = fPlayerPosY + fPlayerVelY * fElapsedTime;
+        RPG_Dynamic *object = player;
+        float fNewObjectPosX = object->px + object->vx * fElapsedTime;
+        float fNewObjectPosY = object->py + object->vy * fElapsedTime;
 
         // resolve collision along X axis, if any
-        if (fPlayerVelX < 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX), static_cast<int>(fPlayerPosY)) ||
-                pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX), static_cast<int>(fPlayerPosY + 0.9))) {
+        if (object->vx < 0) {
+            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX), static_cast<int>(object->py)) ||
+                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX), static_cast<int>(object->py + 0.9))) {
                 // cast the new position to an integer and shift by 1 so that the player is on the boundary
                 // of the colliding tile, instead of leaving some space
-                fNewPlayerPosX = static_cast<int>(fNewPlayerPosX) + 1;
-                fPlayerVelX = 0;
+                fNewObjectPosX = static_cast<int>(fNewObjectPosX) + 1;
+                object->vx = 0;
             }
-        } else if (fPlayerVelX > 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX + 1), static_cast<int>(fPlayerPosY)) ||
-                pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX + 1), static_cast<int>(fPlayerPosY + 0.9))) {
-                fNewPlayerPosX = static_cast<int>(fNewPlayerPosX);
-                fPlayerVelX = 0;
+        } else if (object->vx > 0) {
+            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 1), static_cast<int>(object->py)) ||
+                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 1), static_cast<int>(object->py + 0.9))) {
+                fNewObjectPosX = static_cast<int>(fNewObjectPosX);
+                object->vx = 0;
             }
         }
         // check collision along y
-        if (fPlayerVelY < 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX), static_cast<int>(fNewPlayerPosY)) ||
-                pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX + 0.9), static_cast<int>(fNewPlayerPosY))) {
-                fNewPlayerPosY = static_cast<int>(fNewPlayerPosY) + 1;
-                fPlayerVelY = 0;
+        if (object->vy < 0) {
+            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX), static_cast<int>(fNewObjectPosY)) ||
+                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 0.9), static_cast<int>(fNewObjectPosY))) {
+                fNewObjectPosY = static_cast<int>(fNewObjectPosY) + 1;
+                object->vy = 0;
             }
-        } else if (fPlayerVelY > 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX), static_cast<int>(fNewPlayerPosY + 1)) ||
-                pCurrentMap->GetSolid(static_cast<int>(fNewPlayerPosX + 0.9), static_cast<int>(fNewPlayerPosY + 1))) {
-                fNewPlayerPosY = static_cast<int>(fNewPlayerPosY);
-                fPlayerVelY = 0;
+        } else if (object->vy > 0) {
+            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX), static_cast<int>(fNewObjectPosY + 1)) ||
+                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 0.9), static_cast<int>(fNewObjectPosY + 1))) {
+                fNewObjectPosY = static_cast<int>(fNewObjectPosY);
+                object->vy = 0;
             }
         }
-        fPlayerPosX = fNewPlayerPosX;
-        fPlayerPosY = fNewPlayerPosY;
+        object->px = fNewObjectPosX;
+        object->py = fNewObjectPosY;
 
         // apply friction
-        fPlayerVelX += -4.0f * fPlayerVelX * fElapsedTime;
-        if (std::abs(fPlayerVelX) < 0.01f) {
-            fPlayerVelX = 0.0f;
+        object->vx += -4.0f * object->vx * fElapsedTime;
+        if (std::abs(object->vx) < 0.01f) {
+            object->vx = 0.0f;
         }
-        fPlayerVelY += -4.0f * fPlayerVelY * fElapsedTime;
-        if (std::abs(fPlayerVelY) < 0.01f) {
-            fPlayerVelY = 0.0f;
+        object->vy += -4.0f * object->vy * fElapsedTime;
+        if (std::abs(object->vy) < 0.01f) {
+            object->vy = 0.0f;
         }
-
-        fCameraPosX = fPlayerPosX;
-        fCameraPosY = fPlayerPosY;
+        object->update(fElapsedTime);
+        fCameraPosX = player->px;
+        fCameraPosY = player->py;
         // Draw Level
         int nVisibleTilesX = mWindowWidth / nTileWidth;
         int nVisibleTilesY = mWindowHeight / nTileHeight;
@@ -198,14 +145,8 @@ public:
                                      static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth, nTileHeight);
             }
         }
-        // draw player
-        bool bWalkingAnimation = false;
-        if (std::abs(fPlayerVelX) > 0.3 || std::abs(fPlayerVelY) > 0.3) {
-            bWalkingAnimation = true;
-        }
-        player->drawPlayer(static_cast<int>((fPlayerPosX - fOffsetX) * nTileWidth),
-                           static_cast<int>((fPlayerPosY - fOffsetY) * nTileHeight), nTileWidth, nTileHeight,
-                           bWalkingAnimation, fElapsedTime);
+        // draw object
+        object->drawSelf(this, fOffsetX, fOffsetY, nTileWidth, nTileHeight);
 
         LTexture *font = new LTexture();
         font->loadTextureFromText(getFont(), "Hello, everyone!", {0xFF, 0xFF, 0xFF});

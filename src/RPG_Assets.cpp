@@ -13,6 +13,7 @@ RPG_Assets &RPG_Assets::get() {
 }
 
 RPG_Assets::RPG_Assets() {
+    mSprNames[0] = "main_guy";
     mSprNames[6] = "house/9";
     mSprNames[7] = "house/8";
     mSprNames[8] = "house/7";
