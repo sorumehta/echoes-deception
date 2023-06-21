@@ -17,6 +17,7 @@ void ScriptProcessor::processCommand(float fElapsedTime){
     bUserControlEnabled = mListCommands.empty();
     if(!mListCommands.empty()){
         auto command = mListCommands.front();
+        bUserControlEnabled = !command->bDisableUserInputWhenRunning;
         if(!command->bCompleted) {
             if (command->bStarted) {
                 command->update(fElapsedTime);
@@ -38,13 +39,18 @@ void ScriptProcessor::completeCommand(){
     }
 }
 
+bool ScriptProcessor::isListEmpty() {
+    return mListCommands.empty();
+}
 
-Command_MoveTo::Command_MoveTo(RPG_Dynamic *obj, float targetX, float targetY, float duration) {
+
+Command_MoveTo::Command_MoveTo(RPG_Dynamic *obj, float targetX, float targetY, float duration, bool disableInput) {
     object = obj;
     targetPosX = targetX;
     targetPosY = targetY;
     totalDuration = std::max(duration, 0.001f);
     timeSoFar = 0.0f;
+    bDisableUserInputWhenRunning = disableInput;
 }
 
 void Command_MoveTo::start() {
@@ -74,8 +80,9 @@ void Command_MoveTo::update(float fElapsedTime) {
 //
 RPG_Commands::RPG_Commands() = default;
 
-Command_ShowDialog::Command_ShowDialog(const std::vector<std::string>& line) {
+Command_ShowDialog::Command_ShowDialog(const std::vector<std::string>& line, bool disableInput) {
     vecLines = line;
+    bDisableUserInputWhenRunning = disableInput;
 }
 
 void Command_ShowDialog::start() {
@@ -103,5 +110,8 @@ void Command_ShowDialog::update(float fElapsedTime) {
         font->loadTextureFromText(GameEngine::getFont(), vecLines[l], {0xFF, 0xFF, 0xFF});
         font->drawTexture(dialogBoxPosX, dialogBoxPosY + l*18  );
     }
+    LTexture *font = new LTexture();
+    font->loadTextureFromText(GameEngine::getFont(), "press SPACE to continue", {0xFF, 0xFF, 0xFF});
+    font->drawTexture(dialogBoxPosX, dialogBoxPosY + vecLines.size()*18  );
 
 }

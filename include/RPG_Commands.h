@@ -12,6 +12,7 @@ public:
 //    ~RPG_Commands();
     bool bCompleted = false;
     bool bStarted = false;
+    bool bDisableUserInputWhenRunning = true;
     virtual void start() = 0;
     virtual void update(float fElapsedTime) = 0;
 };
@@ -24,6 +25,7 @@ public:
     void addCommand(RPG_Commands *command);
     void processCommand(float fElapsedTime);
     void completeCommand();
+    bool isListEmpty();
     ScriptProcessor();
 };
 
@@ -34,11 +36,8 @@ private:
     float timeSoFar, totalDuration;
     RPG_Dynamic *object;
 public:
-    Command_MoveTo(RPG_Dynamic *obj, float targetX, float targetY, float duration=0.0f);
-
-
+    Command_MoveTo(RPG_Dynamic *obj, float targetX, float targetY, float duration=0.0f, bool disableInput = true);
     void start() override;
-
     void update(float fElapsedTime) override;
 };
 
@@ -46,7 +45,7 @@ class Command_ShowDialog : public RPG_Commands {
 private:
     std::vector<std::string> vecLines;
 public:
-    Command_ShowDialog(const std::vector<std::string>& line);
+    Command_ShowDialog(const std::vector<std::string>& line, bool disableInput=true);
     void start() override;
     void update(float fElapsedTime) override;
 };

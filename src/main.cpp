@@ -19,13 +19,31 @@ private:
     int nTileHeight{};
     ScriptProcessor mScript;
     std::vector<RPG_Dynamic *> mVecDynamics;
+    bool gameStarted;
+    bool playerOnRun;
+    float totalTimeElapsed;
+    bool bGameOver;
 public:
     void handleInputEvent(int eventType, int keyCode, float fElapsedTime) override {
-        if (eventType == SDL_KEYDOWN){
-            if (keyCode == SDLK_SPACE){
-                if (!mScript.bUserControlEnabled) {
+        if (eventType == SDL_KEYDOWN) {
+            if (keyCode == SDLK_SPACE) {
+                if (!mScript.bUserControlEnabled && !bGameOver) {
                     mScript.completeCommand();
                 }
+            }
+            if (keyCode == SDLK_s) {
+                gameStarted = true;
+                mScript.addCommand(new Command_MoveTo(player, 6, 3, 3));
+                mScript.addCommand(new Command_MoveTo(player, 12, 3, 3));
+                mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 6, 5, 1));
+                mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 6, 3, 3));
+                mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 14, 3, 5));
+                mScript.addCommand(new Command_ShowDialog({"You:", "Paisa laya?"}));
+                mScript.addCommand(new Command_ShowDialog({"Bhai:", "Ye le. Maal de"}));
+                mScript.addCommand(new Command_ShowDialog({"You:", "Haha, Thanks for the money"}));
+                mScript.addCommand(new Command_ShowDialog({"You:", "Maal nahi hai mere paas!"}));
+                mScript.addCommand(new Command_ShowDialog({"You:", "Ghar bhaag raha main"}));
+                mScript.addCommand(new Command_ShowDialog({"You:", "Catch me if you can!"}));
             }
         }
     }
@@ -47,20 +65,14 @@ public:
         if (state[SDL_SCANCODE_RIGHT]) {
             player->vx += 10.0f * secPerFrame;
         }
-        if (state[SDL_SCANCODE_Z]) {
-            mScript.addCommand(new Command_MoveTo(player, 10, 10, 3));
-            mScript.addCommand(new Command_MoveTo(player, 15, 10, 3));
-            mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 10, 10, 3));
-            mScript.addCommand(new Command_ShowDialog({"Tell me", "what sucks?"}));
-            mScript.addCommand(new Command_MoveTo(player, 15, 15, 3));
-            mScript.addCommand(new Command_ShowDialog({"OOP sucks"}));
-            mScript.addCommand(new Command_MoveTo(mVecDynamics[2], 15, 15, 3));
-            mScript.addCommand(new Command_ShowDialog({"You are", "Goddamn right"}));
-            mScript.addCommand(new Command_MoveTo(player, 10, 10, 3));
-        }
+
     }
 
     bool onInit() override {
+        gameStarted = false;
+        playerOnRun = false;
+        bGameOver = false;
+        totalTimeElapsed = 0.0f;
         ASSETS.loadSprites();
         player = new DynamicCreature("player", ASSETS.getSprite(0), 42, 36, 3);
         player->px = 10;
@@ -70,7 +82,7 @@ public:
         dynObj1->px = 5;
         dynObj1->py = 5;
 
-        DynamicCreature *dynObj2 = new DynamicCreature("man2", ASSETS.getSprite(1), 32, 32, 4);
+        DynamicCreature *dynObj2 = new DynamicCreature("man2", ASSETS.getSprite(2), 32, 32, 4);
         dynObj2->px = 14;
         dynObj2->py = 12;
 
@@ -86,20 +98,27 @@ public:
     }
 
 
+    bool doObjectsOverlap(float px1, float py1, float px2, float py2) {
+        float distance = (px1 - px2) * (px1 - px2) + (py1 - py2) * (py1 - py2);
+        return distance <= 1.0f;
+    }
+
     bool onFrameUpdate(float fElapsedTime) override {
+        float maxVelocity = 10.0f;
         for (auto &object: mVecDynamics) {
             // clamp velocities
-            if (object->vy > 10) {
-                object->vy = 10.0f;
+
+            if (object->vy > maxVelocity) {
+                object->vy = maxVelocity;
             }
-            if (object->vy < -10) {
-                object->vy = -10.0f;
+            if (object->vy < -maxVelocity) {
+                object->vy = -maxVelocity;
             }
-            if (object->vx > 10) {
-                object->vx = 10.0f;
+            if (object->vx > maxVelocity) {
+                object->vx = maxVelocity;
             }
-            if (object->vx < -10) {
-                object->vx = -10.0f;
+            if (object->vx < -maxVelocity) {
+                object->vx = -maxVelocity;
             }
 
             float fNewObjectPosX = object->px + object->vx * fElapsedTime;
@@ -136,6 +155,20 @@ public:
                     object->vy = 0;
                 }
             }
+
+            // check collision with other dynamic objects if player on run
+            if (playerOnRun && !bGameOver) {
+                if (object->sName != player->sName) {
+                    if (doObjectsOverlap(object->px, object->py, player->px, player->py)) {
+                        mScript.addCommand(new Command_ShowDialog({"Game Over!", "Press ESC"}));
+                        bGameOver = true;
+                    }
+                }
+
+
+            }
+
+
             object->px = fNewObjectPosX;
             object->py = fNewObjectPosY;
 
@@ -184,7 +217,36 @@ public:
             // draw object
             object->drawSelf(this, fOffsetX, fOffsetY, nTileWidth, nTileHeight);
         }
+//        std::cout << "player pos: " << player->px << ", " << player->py << std::endl;
+//        std::cout << "player velocity: " << player->vx << ", " << player->vy << std::endl;
         mScript.processCommand(fElapsedTime);
+
+        if (!gameStarted) {
+            LTexture *font = new LTexture();
+            font->loadTextureFromText(GameEngine::getFont(), "Press S to start the game", {0xFF, 0xFF, 0xFF});
+            font->drawTexture(200, 200);
+        } else {
+            if (mScript.isListEmpty()) {
+                playerOnRun = true;
+            }
+            if (playerOnRun && !bGameOver) {
+                totalTimeElapsed += fElapsedTime;
+                if (totalTimeElapsed >= 2.0f) {
+                    totalTimeElapsed = 0.0f;
+                    // cancel any previously running command
+                    mScript.completeCommand();
+                    // get target location to go based on player's location
+                    float targetX = player->px;
+                    float targetY = player->py;
+                    // calculate duration based on distance and velocity
+                    float distanceX = std::fabs(player->px - mVecDynamics[1]->px);
+                    float distanceY = std::fabs(player->py - mVecDynamics[1]->py);
+                    float targetDuration = (distanceX + distanceY) / 2.0f;
+                    // add command to move to target location
+                    mScript.addCommand(new Command_MoveTo(mVecDynamics[1], targetX, targetY, targetDuration, false));
+                }
+            }
+        }
         return true;
     }
 };
