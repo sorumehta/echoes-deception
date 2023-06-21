@@ -18,9 +18,9 @@ public:
 };
 
 class ScriptProcessor{
-private:
-    std::list<RPG_Commands*> mListCommands;
+
 public:
+    std::list<RPG_Commands*> mListCommands;
     bool bUserControlEnabled;
     void addCommand(RPG_Commands *command);
     void processCommand(float fElapsedTime);

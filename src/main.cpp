@@ -5,6 +5,8 @@
 #include "RPG_Assets.h"
 #include "RPG_Dynamic.h"
 #include "RPG_Commands.h"
+#include "PathFinder.h"
+
 
 #define ASSETS RPG_Assets::get()
 
@@ -23,6 +25,8 @@ private:
     bool playerOnRun;
     float totalTimeElapsed;
     bool bGameOver;
+    PathFinder *pathFinder;
+    std::pair<int, int> homeLocation = std::make_pair(12, 6);
 public:
     void handleInputEvent(int eventType, int keyCode, float fElapsedTime) override {
         if (eventType == SDL_KEYDOWN) {
@@ -82,18 +86,17 @@ public:
         dynObj1->px = 5;
         dynObj1->py = 5;
 
-        DynamicCreature *dynObj2 = new DynamicCreature("man2", ASSETS.getSprite(2), 32, 32, 4);
-        dynObj2->px = 14;
-        dynObj2->py = 12;
+
 
         // player is always the first object in the vector
         mVecDynamics.emplace_back(player);
         mVecDynamics.emplace_back(dynObj1);
-        mVecDynamics.emplace_back(dynObj2);
 
         nTileWidth = 24;
         nTileHeight = 24;
         pCurrentMap = new cMap_Village();
+
+        pathFinder = new PathFinder(pCurrentMap);
         return true;
     }
 
@@ -160,7 +163,12 @@ public:
             if (playerOnRun && !bGameOver) {
                 if (object->sName != player->sName) {
                     if (doObjectsOverlap(object->px, object->py, player->px, player->py)) {
-                        mScript.addCommand(new Command_ShowDialog({"Game Over!", "Press ESC"}));
+                        mScript.addCommand(new Command_ShowDialog({"Game Over!", "You took a beating from Bhai", "Press ESC"}));
+                        bGameOver = true;
+                    }
+                } else{
+                    if (doObjectsOverlap(object->px, object->py, homeLocation.first, homeLocation.second)){
+                        mScript.addCommand(new Command_ShowDialog({"Well Done!", "You stole the money from Bhai", "Press ESC"}));
                         bGameOver = true;
                     }
                 }
@@ -217,8 +225,7 @@ public:
             // draw object
             object->drawSelf(this, fOffsetX, fOffsetY, nTileWidth, nTileHeight);
         }
-//        std::cout << "player pos: " << player->px << ", " << player->py << std::endl;
-//        std::cout << "player velocity: " << player->vx << ", " << player->vy << std::endl;
+
         mScript.processCommand(fElapsedTime);
 
         if (!gameStarted) {
@@ -233,17 +240,24 @@ public:
                 totalTimeElapsed += fElapsedTime;
                 if (totalTimeElapsed >= 2.0f) {
                     totalTimeElapsed = 0.0f;
+
                     // cancel any previously running command
-                    mScript.completeCommand();
+                    for(auto cmd : mScript.mListCommands){
+                        cmd->bCompleted = true;
+                    }
+
                     // get target location to go based on player's location
-                    float targetX = player->px;
-                    float targetY = player->py;
-                    // calculate duration based on distance and velocity
-                    float distanceX = std::fabs(player->px - mVecDynamics[1]->px);
-                    float distanceY = std::fabs(player->py - mVecDynamics[1]->py);
-                    float targetDuration = (distanceX + distanceY) / 2.0f;
-                    // add command to move to target location
-                    mScript.addCommand(new Command_MoveTo(mVecDynamics[1], targetX, targetY, targetDuration, false));
+
+                    auto aStarResult = pathFinder->solveAStar(mVecDynamics[1]->px, mVecDynamics[1]->py, player->px, player->py);
+                    for(auto coord: aStarResult){
+
+                        float distanceX = std::fabs(coord.first - mVecDynamics[1]->px);
+                        float distanceY = std::fabs(coord.second - mVecDynamics[1]->py);
+                        float targetDuration = (distanceX + distanceY) / 7.0f;
+                        mScript.addCommand(new Command_MoveTo(mVecDynamics[1], coord.first, coord.second, targetDuration, false));
+                    }
+                    std::cout << std::endl;
+
                 }
             }
         }

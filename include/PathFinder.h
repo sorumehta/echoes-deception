@@ -4,9 +4,9 @@
 #pragma once
 
 #include <vector>
+#include "RPG_Maps.h"
 
 struct Node {
-    bool bObstacle = false;
     bool bVisited = false;
     float fGlobalGoal;
     float fLocalGoal;
@@ -18,16 +18,15 @@ struct Node {
 
 class PathFinder {
 private:
-    Node *nodes = nullptr;
-    int nMapWidth = 16;
-    int nMapHeight = 16;
-    Node *nodeStart = nullptr;
-    Node *nodeEnd = nullptr;
+    Node *nodesArr = nullptr;
+    int nMapWidth;
+    int nMapHeight;
+
 
 public:
-    PathFinder();
+    PathFinder(cMap *map);
     ~PathFinder();
 
-    bool solveAStar();
+    std::vector<std::pair<int, int>> solveAStar(int startX, int startY, int endX, int endY);
 };
 
