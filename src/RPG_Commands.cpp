@@ -3,6 +3,7 @@
 //
 
 #include "RPG_Commands.h"
+#include "SimpleGameEngine.h"
 
 ScriptProcessor::ScriptProcessor() {
     bUserControlEnabled = true;
@@ -27,6 +28,13 @@ void ScriptProcessor::processCommand(float fElapsedTime){
 //            delete command;
             mListCommands.pop_front();
         }
+    }
+}
+
+void ScriptProcessor::completeCommand(){
+    if(!mListCommands.empty()){
+        auto commandAtFront = mListCommands.front();
+        commandAtFront->bCompleted = true;
     }
 }
 
@@ -65,7 +73,35 @@ void Command_MoveTo::update(float fElapsedTime) {
 }
 //
 RPG_Commands::RPG_Commands() = default;
-//
-//RPG_Commands::~RPG_Commands() {
-//
-//}
+
+Command_ShowDialog::Command_ShowDialog(const std::vector<std::string>& line) {
+    vecLines = line;
+}
+
+void Command_ShowDialog::start() {
+
+}
+
+void Command_ShowDialog::update(float fElapsedTime) {
+    int nLines = vecLines.size(); // h
+    int maxLineLength = 0; // w
+    for (auto l : vecLines){
+        if (l.size() > maxLineLength){
+            maxLineLength = l.size();
+        }
+    }
+    // Now I want to call fillRect function of game engine here, but I can't, because it is inside a class
+    // But there is nothing instance dependent in that method. That's why OOP sucks.
+    // So I will break some rules here and just call the raw SDL functions
+    int dialogBoxPosX = 20;
+    int dialogBoxPosY = 20;
+    SDL_SetRenderDrawColor(GameEngine::getRenderer(), 0, 0, 0xFF, SDL_ALPHA_OPAQUE);
+    const SDL_Rect rect = {dialogBoxPosX, dialogBoxPosY, maxLineLength * 20, nLines * 20};
+    SDL_RenderFillRect(GameEngine::getRenderer(), &rect);
+    for (int l = 0; l < vecLines.size(); l++){
+        LTexture *font = new LTexture();
+        font->loadTextureFromText(GameEngine::getFont(), vecLines[l], {0xFF, 0xFF, 0xFF});
+        font->drawTexture(dialogBoxPosX, dialogBoxPosY + l*18  );
+    }
+
+}

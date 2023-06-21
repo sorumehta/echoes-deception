@@ -32,7 +32,9 @@ void LTexture::drawTexture(int x, int y, int w, int h, SDL_Rect *clip, double an
     }
 
     //Render to screen
-    SDL_RenderCopyEx(GameEngine::getRenderer(), mTexture, clip, &renderQuad, angle, center, flip);
+    if(SDL_RenderCopyEx(GameEngine::getRenderer(), mTexture, clip, &renderQuad, angle, center, flip) != 0){
+        std::cout << "Error rendering text texture to screen" << std::endl;
+    }
 }
 
 void LTexture::free() {
@@ -283,11 +285,15 @@ void GameEngine::startGameLoop() {
                 quit = true;
             } else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
                 quit = true;
+            } else{
+                // for one time input event handling
+                handleInputEvent(e.type, e.key.keysym.sym, frameElapsedTime);
             }
         }
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
-        onUserInputEvent(0, keyboardState, mouseX, mouseY, frameElapsedTime);
+        // for continuous input handling
+        handleInputState(keyboardState, mouseX, mouseY, frameElapsedTime);
         if (!onFrameUpdate(frameElapsedTime)) {
             quit = true;
         }
@@ -358,6 +364,7 @@ bool GameEngine::playMusic() {
         //Play the music
         Mix_PlayMusic( mMusic, -1 );
     }
+    return true;
 }
 
 bool GameEngine::stopMusic() {
@@ -383,4 +390,12 @@ TTF_Font *GameEngine::getFont() {
         std::cout << "Error: Window not initialized!" << std::endl;
     }
     return mFont;
+}
+
+void GameEngine::handleInputState(const unsigned char *keyboardState, int mouseX, int mouseY, float secPerFrame) {
+
+}
+
+void GameEngine::handleInputEvent(int eventType, int keyCode, float fElapsedTime) {
+
 }

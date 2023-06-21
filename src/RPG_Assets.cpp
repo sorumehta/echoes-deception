@@ -48,9 +48,6 @@ void RPG_Assets::loadSprites() {
             LTexture *texture = new LTexture();
             std::string filePath = basePath + spriteName + ".png";
             texture->loadTextureFromFile(filePath);
-            if(spriteName == "village_man"){
-                std::cout << "village man width: " << texture->getWidth() << ", height: " << texture->getHeight() << std::endl;
-            }
             vSprites.emplace_back(texture);
         }
 

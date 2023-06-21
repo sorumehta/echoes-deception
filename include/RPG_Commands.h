@@ -23,7 +23,7 @@ public:
     bool bUserControlEnabled;
     void addCommand(RPG_Commands *command);
     void processCommand(float fElapsedTime);
-
+    void completeCommand();
     ScriptProcessor();
 };
 
@@ -40,5 +40,13 @@ public:
     void start() override;
 
     void update(float fElapsedTime) override;
+};
 
+class Command_ShowDialog : public RPG_Commands {
+private:
+    std::vector<std::string> vecLines;
+public:
+    Command_ShowDialog(const std::vector<std::string>& line);
+    void start() override;
+    void update(float fElapsedTime) override;
 };

@@ -6,25 +6,33 @@
 #include "RPG_Dynamic.h"
 #include "RPG_Commands.h"
 
-
 #define ASSETS RPG_Assets::get()
 
-class Echoes : public GameEngine {
+class RPG : public GameEngine {
 private:
     cMap *pCurrentMap = nullptr;
     RPG_Dynamic *player = nullptr;
     // positions in tiles space
     float fCameraPosX = 0.0f;
     float fCameraPosY = 0.0f;
-
     int nTileWidth{};
     int nTileHeight{};
     ScriptProcessor mScript;
     std::vector<RPG_Dynamic *> mVecDynamics;
 public:
-    void onUserInputEvent(int eventType, const unsigned char *state, int mouseX,
-                          int mouseY, float secPerFrame) override {
+    void handleInputEvent(int eventType, int keyCode, float fElapsedTime) override {
+        if (eventType == SDL_KEYDOWN){
+            if (keyCode == SDLK_SPACE){
+                if (!mScript.bUserControlEnabled) {
+                    mScript.completeCommand();
+                }
+            }
+        }
+    }
+
+    void handleInputState(const unsigned char *state, int mouseX, int mouseY, float secPerFrame) override {
         if (!mScript.bUserControlEnabled) {
+
             return;
         }
         if (state[SDL_SCANCODE_UP]) {
@@ -43,8 +51,11 @@ public:
             mScript.addCommand(new Command_MoveTo(player, 10, 10, 3));
             mScript.addCommand(new Command_MoveTo(player, 15, 10, 3));
             mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 10, 10, 3));
+            mScript.addCommand(new Command_ShowDialog({"Tell me", "what sucks?"}));
             mScript.addCommand(new Command_MoveTo(player, 15, 15, 3));
+            mScript.addCommand(new Command_ShowDialog({"OOP sucks"}));
             mScript.addCommand(new Command_MoveTo(mVecDynamics[2], 15, 15, 3));
+            mScript.addCommand(new Command_ShowDialog({"You are", "Goddamn right"}));
             mScript.addCommand(new Command_MoveTo(player, 10, 10, 3));
         }
     }
@@ -60,7 +71,7 @@ public:
         dynObj1->py = 5;
 
         DynamicCreature *dynObj2 = new DynamicCreature("man2", ASSETS.getSprite(1), 32, 32, 4);
-        dynObj2->px = 12;
+        dynObj2->px = 14;
         dynObj2->py = 12;
 
         // player is always the first object in the vector
@@ -76,8 +87,6 @@ public:
 
 
     bool onFrameUpdate(float fElapsedTime) override {
-        mScript.processCommand(fElapsedTime);
-
         for (auto &object: mVecDynamics) {
             // clamp velocities
             if (object->vy > 10) {
@@ -160,7 +169,6 @@ public:
 
         float fTileOffsetX = fOffsetX - static_cast<int>(fOffsetX);
         float fTileOffsetY = fOffsetY - static_cast<int>(fOffsetY);
-
         // draw each tile
         // we overdraw on the corners to avoid distortion (hacky)
         for (int x = -1; x < nVisibleTilesX + 1; x++) {
@@ -172,22 +180,17 @@ public:
                                      static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth, nTileHeight);
             }
         }
-        for(auto &object : mVecDynamics){
+        for (auto &object: mVecDynamics) {
             // draw object
             object->drawSelf(this, fOffsetX, fOffsetY, nTileWidth, nTileHeight);
         }
-
-
-
-//        LTexture *font = new LTexture();
-//        font->loadTextureFromText(getFont(), "Hello, everyone!", {0xFF, 0xFF, 0xFF});
-//        font->drawTexture((mWindowWidth/2 - font->getWidth())/2, mWindowHeight/2 - 20  );
+        mScript.processCommand(fElapsedTime);
         return true;
     }
 };
 
 int main() {
-    Echoes echoes;
+    RPG echoes;
     echoes.init(30 * 24, 16 * 24, "Echoes Of Deception");
     echoes.startGameLoop();
     return 0;
