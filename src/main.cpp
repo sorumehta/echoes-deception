@@ -25,6 +25,7 @@ private:
     bool playerOnRun;
     float totalTimeElapsed;
     bool bGameOver;
+    float enemyVelocity = 7.0f;
     PathFinder *pathFinder;
     std::pair<int, int> homeLocation = std::make_pair(12, 6);
 public:
@@ -37,17 +38,20 @@ public:
             }
             if (keyCode == SDLK_s) {
                 gameStarted = true;
-                mScript.addCommand(new Command_MoveTo(player, 6, 3, 3));
-                mScript.addCommand(new Command_MoveTo(player, 12, 3, 3));
-                mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 6, 5, 1));
-                mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 6, 3, 3));
-                mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 14, 3, 5));
-                mScript.addCommand(new Command_ShowDialog({"You:", "Paisa laya?"}));
-                mScript.addCommand(new Command_ShowDialog({"Bhai:", "Ye le. Maal de"}));
+                mScript.addCommand(new Command_ShowDialog({"Welcome.", "You have a secret meeting with Bhai",
+                                                           "At the back of your house"}, {0xFF, 0, 0}));
+                mScript.addCommand(new Command_MoveTo(player, 6, 3, 2));
+                mScript.addCommand(new Command_MoveTo(player, 12, 3, 2));
+                mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 6, 5, 0.5));
+                mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 6, 3, 1));
+                mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 14, 3, 3));
+                mScript.addCommand(new Command_ShowDialog({"Bhai:", "What's up?"}));
+                mScript.addCommand(new Command_ShowDialog({"You:", "Money first"}));
+                mScript.addCommand(new Command_ShowDialog({"Bhai:", "Here you go.", "Now give me stuff"}));
                 mScript.addCommand(new Command_ShowDialog({"You:", "Haha, Thanks for the money"}));
-                mScript.addCommand(new Command_ShowDialog({"You:", "Maal nahi hai mere paas!"}));
-                mScript.addCommand(new Command_ShowDialog({"You:", "Ghar bhaag raha main"}));
-                mScript.addCommand(new Command_ShowDialog({"You:", "Catch me if you can!"}));
+                mScript.addCommand(new Command_ShowDialog({"You:", "I don't have any stuff!"}));
+                mScript.addCommand(new Command_ShowDialog({"You:", "Gotta run home", "Catch me if you can!"}));
+                mScript.addCommand(new Command_ShowDialog({"Run to your main door", "Don't let Bhai catch you"}, {0xFF, 0, 0}));
             }
         }
     }
@@ -82,11 +86,9 @@ public:
         player->px = 10;
         player->py = 10;
 
-        DynamicCreature *dynObj1 = new DynamicCreature("man1", ASSETS.getSprite(1), 32, 32, 4);
+        DynamicCreature *dynObj1 = new DynamicCreature("bhai", ASSETS.getSprite(1), 32, 32, 4);
         dynObj1->px = 5;
         dynObj1->py = 5;
-
-
 
         // player is always the first object in the vector
         mVecDynamics.emplace_back(player);
@@ -97,9 +99,13 @@ public:
         pCurrentMap = new cMap_Village();
 
         pathFinder = new PathFinder(pCurrentMap);
+
+        std::unordered_map<std::string, std::string> soundWavFiles;
+        soundWavFiles["applause"] = "../res/sound/applause.wav";
+        soundWavFiles["orchestra"] =  "../res/sound/orchestra.wav";
+        loadSoundEffects(soundWavFiles);
         return true;
     }
-
 
     bool doObjectsOverlap(float px1, float py1, float px2, float py2) {
         float distance = (px1 - px2) * (px1 - px2) + (py1 - py2) * (py1 - py2);
@@ -163,13 +169,16 @@ public:
             if (playerOnRun && !bGameOver) {
                 if (object->sName != player->sName) {
                     if (doObjectsOverlap(object->px, object->py, player->px, player->py)) {
-                        mScript.addCommand(new Command_ShowDialog({"Game Over!", "You took a beating from Bhai", "Press ESC"}));
+                        playSound("orchestra");
+                        mScript.addCommand(new Command_ShowDialog({"Game Over!", "You belong to Bhai now", "Press ESC"}));
                         bGameOver = true;
                     }
                 } else{
                     if (doObjectsOverlap(object->px, object->py, homeLocation.first, homeLocation.second)){
-                        mScript.addCommand(new Command_ShowDialog({"Well Done!", "You stole the money from Bhai", "Press ESC"}));
+                        playSound("applause");
+                        mScript.addCommand(new Command_ShowDialog({"Well Done!", "You deceived Bhai", "Press ESC"}));
                         bGameOver = true;
+
                     }
                 }
 
@@ -238,25 +247,25 @@ public:
             }
             if (playerOnRun && !bGameOver) {
                 totalTimeElapsed += fElapsedTime;
-                if (totalTimeElapsed >= 2.0f) {
+                float recalibratePathInterval = 2.0f;
+                if (totalTimeElapsed >= recalibratePathInterval) {
                     totalTimeElapsed = 0.0f;
-
+                    enemyVelocity += 0.5f;
+                    if (enemyVelocity >= maxVelocity){
+                        enemyVelocity = maxVelocity;
+                    }
                     // cancel any previously running command
                     for(auto cmd : mScript.mListCommands){
                         cmd->bCompleted = true;
                     }
-
-                    // get target location to go based on player's location
-
                     auto aStarResult = pathFinder->solveAStar(mVecDynamics[1]->px, mVecDynamics[1]->py, player->px, player->py);
                     for(auto coord: aStarResult){
 
                         float distanceX = std::fabs(coord.first - mVecDynamics[1]->px);
                         float distanceY = std::fabs(coord.second - mVecDynamics[1]->py);
-                        float targetDuration = (distanceX + distanceY) / 7.0f;
+                        float targetDuration = (distanceX + distanceY) / enemyVelocity;
                         mScript.addCommand(new Command_MoveTo(mVecDynamics[1], coord.first, coord.second, targetDuration, false));
                     }
-                    std::cout << std::endl;
 
                 }
             }

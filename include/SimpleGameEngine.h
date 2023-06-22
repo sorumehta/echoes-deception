@@ -9,6 +9,7 @@
 #include <thread>
 #include <vector>
 #include <functional>
+#include <unordered_map>
 
 class LTexture {
 private:
@@ -47,12 +48,11 @@ private:
     static SDL_Window *mWindow;
     static SDL_Renderer *mRenderer;
     static TTF_Font *mFont;
+    static std::unordered_map<std::string, Mix_Chunk *> mSoundEffects;
     void initScreen();
 protected:
     int mWindowWidth;
     int mWindowHeight;
-
-    Mix_Music *mMusic;
     int FONT_SIZE;
 
 public:
@@ -60,8 +60,10 @@ public:
     static SDL_Window *getWindow();
     static SDL_Renderer *getRenderer();
     static TTF_Font *getFont();
+    static void loadSoundEffects(std::unordered_map<std::string, std::string> soundFiles);
+    static std::unordered_map<std::string, Mix_Chunk *> getSoundEffects();
+    static void playSound(std::string soundName);
     virtual bool onFrameUpdate(float fElapsedTime) = 0;
-
     virtual bool onInit() = 0;
     virtual void handleInputState(const unsigned char *keyboardState, int mouseX, int mouseY, float secPerFrame);
     virtual void handleInputEvent(int eventType, int keyCode, float fElapsedTime );
@@ -81,10 +83,6 @@ public:
 
     void startGameLoop();
 
-    bool loadMusic(const char *path);
-
-    bool playMusic();
-    bool stopMusic();
     void close_sdl();
 
     ~GameEngine();

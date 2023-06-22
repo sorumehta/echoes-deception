@@ -38,7 +38,6 @@ PathFinder::PathFinder(cMap *map) {
             }
         }
     }
-    std::cout << "Nodes initialized" << std::endl;
 }
 
 std::vector<std::pair<int, int>> PathFinder::solveAStar(int startX, int startY, int endX, int endY) {

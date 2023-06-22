@@ -44,8 +44,9 @@ public:
 class Command_ShowDialog : public RPG_Commands {
 private:
     std::vector<std::string> vecLines;
+    SDL_Color mTextColor;
 public:
-    Command_ShowDialog(const std::vector<std::string>& line, bool disableInput=true);
+    Command_ShowDialog(const std::vector<std::string>& line, SDL_Color textColor = {0xFF, 0xFF, 0xFF} );
     void start() override;
     void update(float fElapsedTime) override;
 };

@@ -4,6 +4,7 @@
 SDL_Window* GameEngine::mWindow = NULL;
 SDL_Renderer* GameEngine::mRenderer = NULL;
 TTF_Font* GameEngine::mFont = NULL;
+std::unordered_map<std::string, Mix_Chunk *> GameEngine::mSoundEffects;
 
 LTexture::LTexture() {
     mTexture = nullptr;
@@ -119,7 +120,7 @@ void LTexture::setColorMod(SDL_Color color) {
 }
 
 
-GameEngine::GameEngine() : mWindowWidth(80), mWindowHeight(40), mMusic(NULL), FONT_SIZE(18) {
+GameEngine::GameEngine() : mWindowWidth(80), mWindowHeight(40), FONT_SIZE(18) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         std::cout << "SDL initialization failed: " << SDL_GetError();
     }
@@ -139,7 +140,6 @@ GameEngine::GameEngine() : mWindowWidth(80), mWindowHeight(40), mMusic(NULL), FO
     if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 )
     {
         std::cout <<"SDL_mixer could not initialize! SDL_mixer Error: %s\n" << Mix_GetError() << std::endl;
-
     }
 }
 
@@ -188,15 +188,6 @@ bool GameEngine::createResources() {
 }
 
 
-bool GameEngine::loadMusic(const char *path) {
-    mMusic = Mix_LoadMUS( path);
-    if (mMusic == NULL) {
-        std::cout << "Failed to load beat music! SDL_mixer Error: %s\n" << Mix_GetError() << std::endl;
-        return false;
-    }
-    return true;
-}
-
 
 bool GameEngine::renderConsole() {
     if (mRenderer == NULL) {
@@ -234,9 +225,10 @@ bool GameEngine::fillRect(int x, int y, int w, int h, Color color) {
 }
 
 void GameEngine::close_sdl() {
-    //Free the music
-    Mix_FreeMusic( mMusic );
-    mMusic = NULL;
+    //Free the sound
+    for(auto [k, sound] : mSoundEffects){
+        Mix_FreeChunk(sound);
+    }
     //Destroy window
     SDL_DestroyRenderer(mRenderer);
     SDL_DestroyWindow(mWindow);
@@ -358,19 +350,6 @@ void GameEngine::DrawWireFrameModel(const std::vector<std::pair<float, float>> &
     }
 }
 
-bool GameEngine::playMusic() {
-    if( Mix_PlayingMusic() == 0 )
-    {
-        //Play the music
-        Mix_PlayMusic( mMusic, -1 );
-    }
-    return true;
-}
-
-bool GameEngine::stopMusic() {
-    Mix_HaltMusic();
-}
-
 SDL_Window *GameEngine::getWindow() {
     if (!mWindow) {
         std::cout << "Error: Window not initialized!" << std::endl;
@@ -392,10 +371,20 @@ TTF_Font *GameEngine::getFont() {
     return mFont;
 }
 
-void GameEngine::handleInputState(const unsigned char *keyboardState, int mouseX, int mouseY, float secPerFrame) {
+void GameEngine::handleInputState(const unsigned char *keyboardState, int mouseX, int mouseY, float secPerFrame) {}
 
+void GameEngine::handleInputEvent(int eventType, int keyCode, float fElapsedTime) {}
+
+void GameEngine::loadSoundEffects(std::unordered_map<std::string, std::string> soundFiles) {
+    for (auto [k, v] : soundFiles){
+        mSoundEffects[k] = Mix_LoadWAV(v.c_str());
+    }
 }
 
-void GameEngine::handleInputEvent(int eventType, int keyCode, float fElapsedTime) {
+std::unordered_map<std::string, Mix_Chunk *> GameEngine::getSoundEffects() {
+    return mSoundEffects;
+}
 
+void GameEngine::playSound(std::string soundName){
+    Mix_PlayChannel(-1, mSoundEffects[soundName], 0);
 }

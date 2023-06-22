@@ -80,9 +80,9 @@ void Command_MoveTo::update(float fElapsedTime) {
 //
 RPG_Commands::RPG_Commands() = default;
 
-Command_ShowDialog::Command_ShowDialog(const std::vector<std::string>& line, bool disableInput) {
+Command_ShowDialog::Command_ShowDialog(const std::vector<std::string>& line, SDL_Color textColor) {
     vecLines = line;
-    bDisableUserInputWhenRunning = disableInput;
+    mTextColor = textColor;
 }
 
 void Command_ShowDialog::start() {
@@ -107,7 +107,7 @@ void Command_ShowDialog::update(float fElapsedTime) {
     SDL_RenderFillRect(GameEngine::getRenderer(), &rect);
     for (int l = 0; l < vecLines.size(); l++){
         LTexture *font = new LTexture();
-        font->loadTextureFromText(GameEngine::getFont(), vecLines[l], {0xFF, 0xFF, 0xFF});
+        font->loadTextureFromText(GameEngine::getFont(), vecLines[l], mTextColor);
         font->drawTexture(dialogBoxPosX, dialogBoxPosY + l*18  );
     }
     LTexture *font = new LTexture();
