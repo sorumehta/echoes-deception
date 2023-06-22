@@ -7,7 +7,6 @@
 #include "RPG_Commands.h"
 #include "PathFinder.h"
 
-
 #define ASSETS RPG_Assets::get()
 
 class RPG : public GameEngine {
@@ -38,8 +37,7 @@ public:
             }
             if (keyCode == SDLK_s) {
                 gameStarted = true;
-                mScript.addCommand(new Command_ShowDialog({"Welcome.", "You have a secret meeting with Bhai",
-                                                           "At the back of your house"}, {0xFF, 0, 0}));
+                mScript.addCommand(new Command_ShowDialog({"Welcome.", "You have a secret meeting with Bhai","At the back of your house"}, {0xFF, 0, 0}));
                 mScript.addCommand(new Command_MoveTo(player, 6, 3, 2));
                 mScript.addCommand(new Command_MoveTo(player, 12, 3, 2));
                 mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 6, 5, 0.5));
@@ -58,7 +56,6 @@ public:
 
     void handleInputState(const unsigned char *state, int mouseX, int mouseY, float secPerFrame) override {
         if (!mScript.bUserControlEnabled) {
-
             return;
         }
         if (state[SDL_SCANCODE_UP]) {
@@ -178,14 +175,9 @@ public:
                         playSound("applause");
                         mScript.addCommand(new Command_ShowDialog({"Well Done!", "You deceived Bhai", "Press ESC"}));
                         bGameOver = true;
-
                     }
                 }
-
-
             }
-
-
             object->px = fNewObjectPosX;
             object->py = fNewObjectPosY;
 
@@ -260,13 +252,11 @@ public:
                     }
                     auto aStarResult = pathFinder->solveAStar(mVecDynamics[1]->px, mVecDynamics[1]->py, player->px, player->py);
                     for(auto coord: aStarResult){
-
                         float distanceX = std::fabs(coord.first - mVecDynamics[1]->px);
                         float distanceY = std::fabs(coord.second - mVecDynamics[1]->py);
                         float targetDuration = (distanceX + distanceY) / enemyVelocity;
                         mScript.addCommand(new Command_MoveTo(mVecDynamics[1], coord.first, coord.second, targetDuration, false));
                     }
-
                 }
             }
         }
