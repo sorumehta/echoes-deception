@@ -98,7 +98,7 @@ public:
         pathFinder = new PathFinder(pCurrentMap);
 
         std::unordered_map<std::string, std::string> soundWavFiles;
-        soundWavFiles["applause"] = "../res/sound/applause.wav";
+        soundWavFiles["trumpet"] = "../res/sound/trumpet.wav";
         soundWavFiles["orchestra"] =  "../res/sound/orchestra.wav";
         loadSoundEffects(soundWavFiles);
         return true;
@@ -172,7 +172,7 @@ public:
                     }
                 } else{
                     if (doObjectsOverlap(object->px, object->py, homeLocation.first, homeLocation.second)){
-                        playSound("applause");
+                        playSound("trumpet");
                         mScript.addCommand(new Command_ShowDialog({"Well Done!", "You deceived Bhai", "Press ESC"}));
                         bGameOver = true;
                     }
