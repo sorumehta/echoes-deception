@@ -72,7 +72,7 @@ public:
     static bool drawLine(int x1, int y1, int x2, int y2, Color color = {0xFF, 0xFF, 0xFF});
     static bool fillRect(int x, int y, int w, int h, Color color = {0xFF, 0xFF, 0xFF});
     static bool drawRect(int x, int y, int w, int h, Color color = {0xFF, 0xFF, 0xFF});
-
+    static bool drawText(std::string text, int x, int y, Color color = {0xFF, 0xFF, 0xFF});
     static void DrawWireFrameModel(const std::vector<std::pair<float, float>> &vecModelCoordinates, float x, float y,
                             float r = 0.0f, float s = 1.0f, Color color = {0xFF, 0xFF, 0xFF});
 

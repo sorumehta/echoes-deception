@@ -1,5 +1,15 @@
 #include "RPG_Game.h"
 
+RPG_Dynamic * RPG_Game::findObjectByName (std::vector<RPG_Dynamic *> vectorDyns, const char *name) {
+    auto it = std::find_if(vectorDyns.begin(), vectorDyns.end(), [&](RPG_Dynamic *obj){
+        return obj->sName == name;
+    });
+    if(it != vectorDyns.end()){
+        return *it;
+    }
+    return nullptr;
+}
+
 void RPG_Game::handleInputEvent(int eventType, int keyCode, float fElapsedTime) {
     if (eventType == SDL_KEYDOWN) {
         if (keyCode == SDLK_SPACE) {
@@ -16,11 +26,9 @@ void RPG_Game::handleInputEvent(int eventType, int keyCode, float fElapsedTime) 
             mScript.addCommand(
                     new Command_ShowDialog({"Welcome.", "You are here to meet Tuco", "You meet Gonzo, his associate"},
                                            {0xFF, 0, 0}));
-            mScript.addCommand(new Command_MoveTo(player, 6, 3, 2));
-            mScript.addCommand(new Command_MoveTo(player, 12, 3, 2));
-            mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 6, 5, 0.5));
-            mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 6, 3, 1));
-            mScript.addCommand(new Command_MoveTo(mVecDynamics[1], 14, 3, 3));
+            RPG_Dynamic *gonzo = findObjectByName(mVecDynamics, "Gonzo");
+
+            mScript.addCommand(new Command_MoveTo(gonzo, 14, 3, 2));
             mScript.addCommand(new Command_ShowDialog({"You:", "I want to see Tuco"}));
             mScript.addCommand(new Command_ShowDialog({"Gonzo:", "Appointments only!", "And you don't have one"}));
             mScript.addCommand(new Command_ShowDialog({"You:", "I am gonna meet him.", "Stop me if you can"}));
@@ -58,7 +66,7 @@ bool RPG_Game::onInit() {
     cMap::g_scriptProcessor = &mScript;
     ASSETS.loadSprites();
     ASSETS.loadMaps();
-    player = new DynamicCreature("Player", ASSETS.getSprite(0), 42, 36, 3);
+    player = new DynamicCreature("Player", ASSETS.getSprite(PLAYER_SPR_IDX), PLAYER_SPR_W, PLAYER_SPR_H, 3);
 
 
 //        DynamicCreature *dynObj1 = new DynamicCreature("Gonzo", ASSETS.getSprite(1), 32, 32, 4);
@@ -72,7 +80,7 @@ bool RPG_Game::onInit() {
     nTileWidth = 24;
     nTileHeight = 24;
 //        pCurrentMap = ASSETS.getMap("village");
-    changeMap("village", 5, 5);
+    changeMap("village", 12, 3);
     pathFinder = new PathFinder(pCurrentMap);
 
     std::unordered_map<std::string, std::string> soundWavFiles;
@@ -95,16 +103,11 @@ void RPG_Game::displayDialog(std::vector<std::string> vecLines, int dialogBoxPos
             maxLineLength = l.size();
         }
     }
-
     GameEngine::fillRect(dialogBoxPosX, dialogBoxPosY, maxLineLength * 20, nLines * 20, {0, 0, 0xFF});
     for (int l = 0; l < vecLines.size(); l++){
-        LTexture *font = new LTexture();
-        font->loadTextureFromText(GameEngine::getFont(), vecLines[l], {0xFF, 0xFF, 0xFF});
-        font->drawTexture(dialogBoxPosX, dialogBoxPosY + l*18  );
+        drawText(vecLines[l], dialogBoxPosX, dialogBoxPosY + l*18);
     }
-    LTexture *font = new LTexture();
-    font->loadTextureFromText(GameEngine::getFont(), "press SPACE to continue", {0xFF, 0xFF, 0xFF});
-    font->drawTexture(dialogBoxPosX, dialogBoxPosY + vecLines.size()*18  );
+    drawText("press SPACE to continue", dialogBoxPosX, dialogBoxPosY + vecLines.size()*18 + 1);
 
 }
 
@@ -121,6 +124,7 @@ void RPG_Game::changeMap(std::string mapName, float x, float y) {
 }
 
 bool RPG_Game::onFrameUpdate(float fElapsedTime) {
+    // utility functions
     auto doObjectsOverlap = [](float px1, float py1, float px2, float py2) {
         float distance = (px1 - px2) * (px1 - px2) + (py1 - py2) * (py1 - py2);
         return distance <= 1.0f;
@@ -182,14 +186,21 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
         float fDynamicObjPosY = fNewObjectPosY;
         for (auto &dyn: mVecDynamics) {
             if (dyn != object) {
+
                 // player must not overlap if solidVDyn is true
                 if (dyn->bSolidVsDyn && object->bSolidVsDyn) {
 
                 } else { // object can interact with things
                     // object is player
+
                     if (object->sName == player->sName) {
-                        if (doObjectsOverlap(fDynamicObjPosX, fDynamicObjPosY, dyn->px, dyn->py)) {
+                        if (fDynamicObjPosX < (dyn->px + 1.0f) && (fDynamicObjPosX + 1.0f) > dyn->px &&
+                            object->py < (dyn->py + 1.0f) && (object->py + 1.0f) > dyn->py)
+                        {
                             // check if its map related
+                            std::cout << "objects " << object->sName << " and " << dyn->sName << " overlap" << std::endl;
+                            std::cout << "controled enabled = " << mScript.bUserControlEnabled << ", current map = " << pCurrentMap->sName << std::endl;
+
                             pCurrentMap->onInteraction(mVecDynamics, dyn, cMap::WALK);
                         }
                     }
@@ -248,18 +259,14 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
     if(bShowDialog){
         displayDialog(vecDialogToShow, 20, 20);
     }
-
     mScript.processCommand(fElapsedTime);
-
     if (!gameStarted) {
-        LTexture *font = new LTexture();
-        font->loadTextureFromText(GameEngine::getFont(), "Press S to start the game", {0xFF, 0xFF, 0xFF});
-        font->drawTexture(200, 200);
+        drawText("Press S to start the game", 200, 200);
     } else {
         if (mScript.isListEmpty()) {
             playerOnRun = true;
         }
-        if (playerOnRun && !bGameOver) {
+        if (playerOnRun && !bGameOver && pCurrentMap->sName == "village" && false) {
             totalTimeElapsed += fElapsedTime;
             float recalibratePathInterval = 2.0f;
             if (totalTimeElapsed >= recalibratePathInterval) {
@@ -272,14 +279,18 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
                 for (auto cmd: mScript.mListCommands) {
                     cmd->bCompleted = true;
                 }
-                auto aStarResult = pathFinder->solveAStar(mVecDynamics[1]->px, mVecDynamics[1]->py, player->px,
-                                                          player->py);
-                for (auto coord: aStarResult) {
-                    float distanceX = std::fabs(coord.first - mVecDynamics[1]->px);
-                    float distanceY = std::fabs(coord.second - mVecDynamics[1]->py);
-                    float targetDuration = (distanceX + distanceY) / enemyVelocity;
-                    mScript.addCommand(
-                            new Command_MoveTo(mVecDynamics[1], coord.first, coord.second, targetDuration, false));
+
+                RPG_Dynamic *enemy = findObjectByName(mVecDynamics, "Gonzo");
+                if(enemy){
+                    auto aStarResult = pathFinder->solveAStar(enemy->px, enemy->py, player->px,
+                                                              player->py);
+                    for (auto coord: aStarResult) {
+                        float distanceX = std::fabs(coord.first - enemy->px);
+                        float distanceY = std::fabs(coord.second - enemy->py);
+                        float targetDuration = (distanceX + distanceY) / enemyVelocity;
+                        mScript.addCommand(
+                                new Command_MoveTo(enemy, coord.first, coord.second, targetDuration, false));
+                    }
                 }
             }
         }

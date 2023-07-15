@@ -11,7 +11,6 @@
 #include "RPG_Commands.h"
 #include "PathFinder.h"
 
-#define ASSETS RPG_Assets::get()
 
 class RPG_Game : public GameEngine {
 private:
@@ -28,7 +27,7 @@ private:
     bool playerOnRun;
     float totalTimeElapsed;
     bool bGameOver;
-    float enemyVelocity = 7.0f;
+    float enemyVelocity = 4.0f;
     PathFinder *pathFinder;
     std::pair<int, int> homeLocation = std::make_pair(12, 6);
     std::vector<std::string> vecDialogToShow;
@@ -49,4 +48,7 @@ public:
     void showDialog(std::vector<std::string> vecLines);
 
     void displayDialog(std::vector<std::string> vecText, int x, int y);
+    RPG_Dynamic * findObjectByName (std::vector<RPG_Dynamic *> vectorDyns, const char *name);
+
+    RPG_Dynamic *findObjectByName(RPG_Dynamic *vector1, const char *string);
 };

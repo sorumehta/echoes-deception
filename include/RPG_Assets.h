@@ -7,6 +7,12 @@
 #include "SimpleGameEngine.h"
 #include "RPG_Maps.h"
 
+const int PLAYER_SPR_IDX = 2;
+const int PLAYER_SPR_W = 42;
+const int PLAYER_SPR_H = 36;
+
+#define ASSETS RPG_Assets::get()
+
 class RPG_Assets {
 public:
     static RPG_Assets& get();

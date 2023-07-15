@@ -233,6 +233,12 @@ bool GameEngine::drawRect(int x, int y, int w, int h, Color color) {
     return true;
 }
 
+bool GameEngine::drawText(std::string text, int x, int y, Color color) {
+    LTexture *font = new LTexture();
+    font->loadTextureFromText(GameEngine::getFont(), text, {0xFF, 0xFF, 0xFF});
+    font->drawTexture(x, y);
+}
+
 void GameEngine::close_sdl() {
     //Free the sound
     for(auto [k, sound] : mSoundEffects){

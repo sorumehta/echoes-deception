@@ -47,5 +47,6 @@ public:
 class cMap_Home : public cMap {
 public:
     cMap_Home();
+    bool PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) override;
     bool onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dynamic *target, NATURE nature) override;
 };

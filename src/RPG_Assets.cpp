@@ -13,9 +13,12 @@ RPG_Assets &RPG_Assets::get() {
 }
 
 RPG_Assets::RPG_Assets() {
-    mSprNames[0] = "main_guy";
-    mSprNames[1] = "village_man";
-    mSprNames[2] = "village_woman";
+    mSprNames[0] = "wall"; // to be added
+    mSprNames[1] = "floor"; // to be added
+    mSprNames[2] = "main_guy";
+    mSprNames[3] = "village_man";
+    mSprNames[4] = "village_woman";
+    mSprNames[5] = "void";
     mSprNames[6] = "house/9";
     mSprNames[7] = "house/8";
     mSprNames[8] = "house/7";

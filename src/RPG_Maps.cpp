@@ -66,6 +66,10 @@ cMap_Village::cMap_Village() {
 bool cMap_Village::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
     // add teleport square
     vecDynamics.push_back(new Teleport(12.0, 6.0, "home", 5.0, 12.0));
+    DynamicCreature *gonzo = new DynamicCreature("Gonzo", ASSETS.getSprite(3), 32, 32, 4);
+    gonzo->px = 10;
+    gonzo->py = 3;
+    vecDynamics.push_back(gonzo);
     return true;
 }
 
@@ -95,4 +99,11 @@ bool cMap_Home::onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dynami
         return true;
     }
     return false;
+}
+
+bool cMap_Home::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
+    // add teleport square
+    vecDynamics.push_back(new Teleport(5.0, 13.0, "village", 12.0, 7.0));
+    vecDynamics.push_back(new Teleport(4.0, 13.0, "village", 12.0, 7.0));
+    return true;
 }
