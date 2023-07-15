@@ -7,6 +7,8 @@
 #include "RPG_Maps.h"
 #include "RPG_Assets.h"
 
+ScriptProcessor *cMap::g_scriptProcessor = nullptr;
+
 cMap::cMap(){
     nWidth = 0;
     nHeight = 0;
@@ -48,7 +50,49 @@ bool cMap::Create(const std::string& fileData, const std::string& name) {
     return false;
 }
 
+bool cMap::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
+    return true;
+}
+
+bool cMap::onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dynamic *target, cMap::NATURE nature) {
+    return false;
+}
+
 cMap_Village::cMap_Village() {
 
-    Create("../res/village.txt",  "Echotopia");
+    Create("../res/village.txt",  "village");
+}
+
+bool cMap_Village::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
+    // add teleport square
+    vecDynamics.push_back(new Teleport(12.0, 6.0, "home", 5.0, 12.0));
+    return true;
+}
+
+bool cMap_Village::onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dynamic *target, cMap::NATURE nature) {
+    if(target->sName == "Teleport"){
+        g_scriptProcessor->addCommand(new Command_ChangeMap(
+                ((Teleport *)target)->targetMapName,
+                ((Teleport *)target)->mapPosX,
+                ((Teleport *)target)->mapPosY
+                ));
+        return true;
+    }
+    return false;
+}
+
+cMap_Home::cMap_Home() {
+    Create("../res/home.txt",  "home");
+}
+
+bool cMap_Home::onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dynamic *target, cMap::NATURE nature) {
+    if(target->sName == "Teleport"){
+        g_scriptProcessor->addCommand(new Command_ChangeMap(
+                ((Teleport *)target)->targetMapName,
+                ((Teleport *)target)->mapPosX,
+                ((Teleport *)target)->mapPosY
+        ));
+        return true;
+    }
+    return false;
 }

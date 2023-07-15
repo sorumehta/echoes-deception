@@ -224,6 +224,15 @@ bool GameEngine::fillRect(int x, int y, int w, int h, Color color) {
     return true;
 }
 
+bool GameEngine::drawRect(int x, int y, int w, int h, Color color) {
+    SDL_SetRenderDrawColor(mRenderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
+    const SDL_Rect rect = {x, y, w, h};
+    if (SDL_RenderDrawRect(mRenderer, &rect) != 0){
+        return false;
+    }
+    return true;
+}
+
 void GameEngine::close_sdl() {
     //Free the sound
     for(auto [k, sound] : mSoundEffects){

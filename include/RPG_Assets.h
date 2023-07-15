@@ -3,7 +3,9 @@
 //
 #pragma once
 #include <vector>
+#include <unordered_map>
 #include "SimpleGameEngine.h"
+#include "RPG_Maps.h"
 
 class RPG_Assets {
 public:
@@ -15,12 +17,13 @@ public:
     ~RPG_Assets();
 
     LTexture *getSprite(int idx);
-
+    cMap *getMap(std::string mapName);
     void loadSprites();
+    void loadMaps();
 
 private:
     // each sprite would have a unique index.
     std::vector<LTexture*> vSprites;
-
+    std::unordered_map<std::string, cMap*> maps;
     std::array<std::string, 30> mSprNames;
 };

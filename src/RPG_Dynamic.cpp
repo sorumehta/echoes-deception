@@ -32,6 +32,12 @@ void DynamicCreature::drawSelf(GameEngine *engine, float fOffsetX, float fOffset
             nSheetOffsetX = mGraphicCounter * sprWidth;
         }
         break;
+        case STANDING:
+        {
+            nSheetOffsetX = 0;
+            nSheetOffsetY = 0;
+        }
+        break;
     }
     SDL_Rect clip;
     clip.x = nSheetOffsetX;
@@ -66,4 +72,22 @@ void DynamicCreature::update(float fElapsedTime) {
     } else if (vy < -0.05f){
         mFacingDirection = NORTH;
     }
+}
+
+void Teleport::drawSelf(GameEngine *engine, float fOffsetX, float fOffsetY, int nTileWidth, int nTileHeight) {
+    engine->drawRect((px - fOffsetX)*nTileWidth, (py - fOffsetY)*nTileHeight, nTileWidth, nTileHeight);
+}
+
+void Teleport::update(float fElapsedTime) {
+    // does nothing
+}
+
+Teleport::Teleport(float x, float y, std::string targetMap, float tx, float ty): RPG_Dynamic("Teleport") {
+    px = x;
+    py = y;
+    mapPosX = tx;
+    mapPosY = ty;
+    targetMapName = targetMap;
+    bSolidVsDyn = false;
+    bSolidVsMap = false;
 }

@@ -37,5 +37,16 @@ public:
     void drawSelf(GameEngine *engine, float fOffsetX, float fOffsetY, int nTileWidth, int nTileHeight) override;
 
     void update(float fElapsedTime) override;
+};
 
+class Teleport : public RPG_Dynamic {
+public:
+    std::string targetMapName;
+    float mapPosX;
+    float mapPosY;
+    Teleport(float x, float y, std::string targetMap, float tx, float ty);
+
+    void drawSelf(GameEngine *engine, float fOffsetX, float fOffsetY, int nTileWidth, int nTileHeight) override;
+
+    void update(float fElapsedTime) override;
 };

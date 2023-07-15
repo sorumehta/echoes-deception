@@ -3,7 +3,11 @@
 //
 
 #include "RPG_Commands.h"
-#include "SimpleGameEngine.h"
+#include "RPG_Game.h"
+
+// initialise static variable
+// the real initialisation would happen in onInit function
+RPG_Game *RPG_Commands::engine = nullptr;
 
 ScriptProcessor::ScriptProcessor() {
     bUserControlEnabled = true;
@@ -60,12 +64,6 @@ void Command_MoveTo::start() {
 
 void Command_MoveTo::update(float fElapsedTime) {
     timeSoFar += fElapsedTime;
-//    float normalizedTime = timeSoFar / totalDuration;
-//    if (normalizedTime >= 1.0f){
-//        normalizedTime = 1.0f;
-//    }
-//    object->px = (targetPosX - startPosX) * normalizedTime + startPosX;
-//    object->py = (targetPosY - startPosY) * normalizedTime + startPosY;
 
     object->vx = (targetPosX - startPosX) / totalDuration;
     object->vy = (targetPosY - startPosY) / totalDuration;
@@ -77,7 +75,7 @@ void Command_MoveTo::update(float fElapsedTime) {
         bCompleted = true;
     }
 }
-//
+
 RPG_Commands::RPG_Commands() = default;
 
 Command_ShowDialog::Command_ShowDialog(const std::vector<std::string>& line, SDL_Color textColor) {
@@ -86,32 +84,24 @@ Command_ShowDialog::Command_ShowDialog(const std::vector<std::string>& line, SDL
 }
 
 void Command_ShowDialog::start() {
-
+    engine->showDialog(vecLines);
 }
 
 void Command_ShowDialog::update(float fElapsedTime) {
-    int nLines = vecLines.size(); // h
-    int maxLineLength = 0; // w
-    for (auto l : vecLines){
-        if (l.size() > maxLineLength){
-            maxLineLength = l.size();
-        }
-    }
-    // Now I want to call fillRect function of game engine here, but I can't, because it is inside a class
-    // But there is nothing instance dependent in that method. That's why OOP sucks.
-    // So I will break some rules here and just call the raw SDL functions
-    int dialogBoxPosX = 20;
-    int dialogBoxPosY = 20;
-    SDL_SetRenderDrawColor(GameEngine::getRenderer(), 0, 0, 0xFF, SDL_ALPHA_OPAQUE);
-    const SDL_Rect rect = {dialogBoxPosX, dialogBoxPosY, maxLineLength * 20, nLines * 20};
-    SDL_RenderFillRect(GameEngine::getRenderer(), &rect);
-    for (int l = 0; l < vecLines.size(); l++){
-        LTexture *font = new LTexture();
-        font->loadTextureFromText(GameEngine::getFont(), vecLines[l], mTextColor);
-        font->drawTexture(dialogBoxPosX, dialogBoxPosY + l*18  );
-    }
-    LTexture *font = new LTexture();
-    font->loadTextureFromText(GameEngine::getFont(), "press SPACE to continue", {0xFF, 0xFF, 0xFF});
-    font->drawTexture(dialogBoxPosX, dialogBoxPosY + vecLines.size()*18  );
+
+}
+
+Command_ChangeMap::Command_ChangeMap(std::string name, float mapPosX, float mapPosY) {
+    mapName = name;
+    fMapPosX = mapPosX;
+    fMapPosY = mapPosY;
+}
+
+void Command_ChangeMap::start() {
+    engine->changeMap(mapName, fMapPosX, fMapPosY);
+    bCompleted = true;
+}
+
+void Command_ChangeMap::update(float fElapsedTime) {
 
 }

@@ -59,3 +59,15 @@ void RPG_Assets::loadSprites() {
 LTexture *RPG_Assets::getSprite(int idx) {
     return vSprites[idx];
 }
+
+void RPG_Assets::loadMaps() {
+    auto load = [&](cMap *m){
+        maps[m->sName] = m;
+    };
+    load(new cMap_Village());
+    load(new cMap_Home());
+}
+
+cMap *RPG_Assets::getMap(std::string mapName) {
+    return maps[mapName];
+}

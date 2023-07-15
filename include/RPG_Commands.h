@@ -6,6 +6,8 @@
 #include <list>
 #include "RPG_Dynamic.h"
 
+class RPG_Game;
+
 class RPG_Commands {
 public:
     RPG_Commands();
@@ -13,6 +15,7 @@ public:
     bool bCompleted = false;
     bool bStarted = false;
     bool bDisableUserInputWhenRunning = true;
+    static RPG_Game *engine;
     virtual void start() = 0;
     virtual void update(float fElapsedTime) = 0;
 };
@@ -47,6 +50,17 @@ private:
     SDL_Color mTextColor;
 public:
     Command_ShowDialog(const std::vector<std::string>& line, SDL_Color textColor = {0xFF, 0xFF, 0xFF} );
+    void start() override;
+    void update(float fElapsedTime) override;
+};
+
+class Command_ChangeMap : public RPG_Commands {
+private:
+    std::string mapName;
+    float fMapPosX;
+    float fMapPosY;
+public:
+    Command_ChangeMap(std::string name, float mapPosX, float mapPosY);
     void start() override;
     void update(float fElapsedTime) override;
 };
