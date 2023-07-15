@@ -22,24 +22,25 @@ void RPG_Game::handleInputEvent(int eventType, int keyCode, float fElapsedTime) 
             }
         }
         if (keyCode == SDLK_s) {
-            gameStarted = true;
-            mScript.addCommand(
-                    new Command_ShowDialog({"Welcome.", "You are here to meet Tuco", "You meet Gonzo, his associate"},
-                                           {0xFF, 0, 0}));
-            RPG_Dynamic *gonzo = findObjectByName(mVecDynamics, "Enemy");
-
-            mScript.addCommand(new Command_MoveTo(gonzo, 14, 3, 2));
-            mScript.addCommand(new Command_ShowDialog({"You:", "I want to see Tuco"}));
-            mScript.addCommand(new Command_ShowDialog({"Gonzo:", "Appointments only!", "And you don't have one"}));
-            mScript.addCommand(new Command_ShowDialog({"You:", "I am gonna meet him.", "Stop me if you can"}));
-            mScript.addCommand(
-                    new Command_ShowDialog({"Run to the main door", "Don't let Gonzo catch you"}, {0xFF, 0, 0}));
+            if(!gameStarted) {
+                gameStarted = true;
+                mScript.addCommand(
+                        new Command_ShowDialog(
+                                {"Welcome.", "Today you have a secret meeting with Gonzo at the back of your house", "You have a plan to deceive him"},
+                                {0xFF, 0, 0}));
+                mScript.addCommand(new Command_ShowDialog({"Gonzo:", "Where is my stuff?"}));
+                mScript.addCommand(new Command_ShowDialog({"You:", "Money first"}));
+                mScript.addCommand(new Command_ShowDialog({"Gonzo:", "Its here, take it. Now give me my stuff"}));
+                mScript.addCommand(new Command_ShowDialog({"You:", "I don't have the stuff, haha.", "Catch me if you can"}));
+                mScript.addCommand(
+                        new Command_ShowDialog({"Run to the main door", "Don't let Gonzo catch you"}, {0xFF, 0, 0}));
+            }
         }
     }
 }
 
 void RPG_Game::handleInputState(const unsigned char *state, int mouseX, int mouseY, float secPerFrame) {
-    if (!mScript.bUserControlEnabled) {
+    if (!mScript.bUserControlEnabled || bGameOver) {
         return;
     }
     if (state[SDL_SCANCODE_UP]) {
@@ -124,8 +125,8 @@ void RPG_Game::changeMap(std::string mapName, float x, float y) {
 bool RPG_Game::onFrameUpdate(float fElapsedTime) {
     // utility functions
     auto doObjectsOverlap = [](float px1, float py1, float px2, float py2) {
-        float distance = (px1 - px2) * (px1 - px2) + (py1 - py2) * (py1 - py2);
-        return distance <= 1.0f;
+        return px1 < (px2 + 1.0f) && (px1 + 1.0f) > px2 &&
+        py1 < (py2 + 1.0f) && (py1 + 1.0f) > py2;
     };
 
     float maxVelocity = 10.0f;
@@ -185,11 +186,17 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
             if (dyn != object) {
                 // player must not overlap if solidVDyn is true
                 if (dyn->bSolidVsDyn && object->bSolidVsDyn) {
+                    if(doObjectsOverlap(fDynamicObjPosX, fDynamicObjPosY, dyn->px, dyn->py)){
+                        if(!dyn->bFriendly){ // uh oh
+                            mScript.addCommand(new Command_ShowDialog({"Game over, Gonzo owns you now", "Press ESC."}));
+                            bGameOver = true;
+                        }
+                    }
+
                 } else { // object can interact with things
                     // object is player
                     if (object->sName == player->sName) {
-                        if (fDynamicObjPosX < (dyn->px + 1.0f) && (fDynamicObjPosX + 1.0f) > dyn->px &&
-                            object->py < (dyn->py + 1.0f) && (object->py + 1.0f) > dyn->py)
+                        if (doObjectsOverlap(fDynamicObjPosX, fDynamicObjPosY, dyn->px, dyn->py))
                         {
                             pCurrentMap->onInteraction(mVecDynamics, dyn, cMap::WALK);
                         }
@@ -210,7 +217,10 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
         if (std::abs(object->vy) < 0.01f) {
             object->vy = 0.0f;
         }
-        object->update(fElapsedTime, player, pCurrentMap);
+        if(gameStarted && playerOnRun){
+            object->update(fElapsedTime, player, pCurrentMap);
+        }
+
     }
     fCameraPosX = player->px;
     fCameraPosY = player->py;
@@ -252,6 +262,14 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
     mScript.processCommand(fElapsedTime);
     if (!gameStarted) {
         drawText("Press S to start the game", 200, 200);
+    } else{
+        if(mScript.isListEmpty()){
+            playerOnRun = true;
+        }
+        if(pCurrentMap->sName == "home"){
+            bGameOver = true;
+            mScript.addCommand(new Command_ShowDialog({"Congratulations, you safely reached home!", "End of Part 1", "Press ESC to exit"}));
+        }
     }
     return true;
 }

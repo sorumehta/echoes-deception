@@ -67,7 +67,7 @@ bool cMap_Village::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
     // add teleport square
     vecDynamics.push_back(new Teleport(12.0, 6.0, "home", 5.0, 12.0));
     DynamicCreature *enemy = new DynamicCreatureEnemy();
-    enemy->px = 10;
+    enemy->px = 14;
     enemy->py = 3;
     vecDynamics.push_back(enemy);
     return true;
@@ -103,7 +103,7 @@ bool cMap_Home::onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dynami
 
 bool cMap_Home::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
     // add teleport square
-    vecDynamics.push_back(new Teleport(5.0, 13.0, "village", 12.0, 7.0));
-    vecDynamics.push_back(new Teleport(4.0, 13.0, "village", 12.0, 7.0));
+//    vecDynamics.push_back(new Teleport(5.0, 13.0, "village", 12.0, 7.0));
+//    vecDynamics.push_back(new Teleport(4.0, 13.0, "village", 12.0, 7.0));
     return true;
 }

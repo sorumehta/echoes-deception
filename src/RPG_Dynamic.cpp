@@ -121,10 +121,6 @@ void DynamicCreatureEnemy::behaviour(float fElapsedTime, RPG_Dynamic *player,cMa
     if (stateTick <= 0){
         pathToFollow.clear();
         pathToFollow = pathFinder->solveAStar(px, py, player->px, player->py);
-        for (auto p : pathToFollow){
-            std::cout << p.first << "," << p.second << "  ";
-        }
-        std::cout << std::endl;
         stateTick += 2.0f;
         pathTick = 0.5f;
         pathIdx = 0;
