@@ -26,7 +26,7 @@ void RPG_Game::handleInputEvent(int eventType, int keyCode, float fElapsedTime) 
             mScript.addCommand(
                     new Command_ShowDialog({"Welcome.", "You are here to meet Tuco", "You meet Gonzo, his associate"},
                                            {0xFF, 0, 0}));
-            RPG_Dynamic *gonzo = findObjectByName(mVecDynamics, "Gonzo");
+            RPG_Dynamic *gonzo = findObjectByName(mVecDynamics, "Enemy");
 
             mScript.addCommand(new Command_MoveTo(gonzo, 14, 3, 2));
             mScript.addCommand(new Command_ShowDialog({"You:", "I want to see Tuco"}));
@@ -81,7 +81,6 @@ bool RPG_Game::onInit() {
     nTileHeight = 24;
 //        pCurrentMap = ASSETS.getMap("village");
     changeMap("village", 12, 3);
-    pathFinder = new PathFinder(pCurrentMap);
 
     std::unordered_map<std::string, std::string> soundWavFiles;
     soundWavFiles["trumpet"] = "../res/sound/trumpet.wav";
@@ -120,7 +119,6 @@ void RPG_Game::changeMap(std::string mapName, float x, float y) {
     player->py = y;
     // append the map dynamics (teleports etc) to the dynamic objects vector
     pCurrentMap->PopulateDynamics(mVecDynamics);
-
 }
 
 bool RPG_Game::onFrameUpdate(float fElapsedTime) {
@@ -133,7 +131,6 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
     float maxVelocity = 10.0f;
     for (auto &object: mVecDynamics) {
         // clamp velocities
-
         if (object->vy > maxVelocity) {
             object->vy = maxVelocity;
         }
@@ -149,34 +146,34 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
 
         float fNewObjectPosX = object->px + object->vx * fElapsedTime;
         float fNewObjectPosY = object->py + object->vy * fElapsedTime;
-
         // resolve collision along X axis, if any
+        float border = 0.1f; // the border on the tiles to shrink the opaqueness of tiles and make collisions a bit more relaxed
         if (object->vx < 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX), static_cast<int>(object->py)) ||
-                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX), static_cast<int>(object->py + 0.9))) {
+            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + border), static_cast<int>(object->py + border)) ||
+                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + border), static_cast<int>(object->py + 1 - border))) {
                 // cast the new position to an integer and shift by 1 so that the player is on the boundary
                 // of the colliding tile, instead of leaving some space
                 fNewObjectPosX = static_cast<int>(fNewObjectPosX) + 1;
                 object->vx = 0;
             }
         } else if (object->vx > 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 1), static_cast<int>(object->py)) ||
-                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 1), static_cast<int>(object->py + 0.9))) {
+            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 1 - border), static_cast<int>(object->py + border)) ||
+                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 1 - border), static_cast<int>(object->py + 1 - border))) {
                 fNewObjectPosX = static_cast<int>(fNewObjectPosX);
                 object->vx = 0;
             }
         }
         // check collision along y
         if (object->vy < 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX), static_cast<int>(fNewObjectPosY)) ||
-                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 0.9), static_cast<int>(fNewObjectPosY))) {
+            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + border), static_cast<int>(fNewObjectPosY + border)) ||
+                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 1 - border), static_cast<int>(fNewObjectPosY + border))) {
                 fNewObjectPosY = static_cast<int>(fNewObjectPosY) + 1;
                 object->vy = 0;
             }
         } else if (object->vy > 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX), static_cast<int>(fNewObjectPosY + 1)) ||
-                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 0.9),
-                                      static_cast<int>(fNewObjectPosY + 1))) {
+            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + border), static_cast<int>(fNewObjectPosY + 1 - border)) ||
+                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 1 - border),
+                                      static_cast<int>(fNewObjectPosY + 1 - border))) {
                 fNewObjectPosY = static_cast<int>(fNewObjectPosY);
                 object->vy = 0;
             }
@@ -186,21 +183,14 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
         float fDynamicObjPosY = fNewObjectPosY;
         for (auto &dyn: mVecDynamics) {
             if (dyn != object) {
-
                 // player must not overlap if solidVDyn is true
                 if (dyn->bSolidVsDyn && object->bSolidVsDyn) {
-
                 } else { // object can interact with things
                     // object is player
-
                     if (object->sName == player->sName) {
                         if (fDynamicObjPosX < (dyn->px + 1.0f) && (fDynamicObjPosX + 1.0f) > dyn->px &&
                             object->py < (dyn->py + 1.0f) && (object->py + 1.0f) > dyn->py)
                         {
-                            // check if its map related
-                            std::cout << "objects " << object->sName << " and " << dyn->sName << " overlap" << std::endl;
-                            std::cout << "controled enabled = " << mScript.bUserControlEnabled << ", current map = " << pCurrentMap->sName << std::endl;
-
                             pCurrentMap->onInteraction(mVecDynamics, dyn, cMap::WALK);
                         }
                     }
@@ -220,7 +210,7 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
         if (std::abs(object->vy) < 0.01f) {
             object->vy = 0.0f;
         }
-        object->update(fElapsedTime);
+        object->update(fElapsedTime, player, pCurrentMap);
     }
     fCameraPosX = player->px;
     fCameraPosY = player->py;
@@ -262,38 +252,6 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
     mScript.processCommand(fElapsedTime);
     if (!gameStarted) {
         drawText("Press S to start the game", 200, 200);
-    } else {
-        if (mScript.isListEmpty()) {
-            playerOnRun = true;
-        }
-        if (playerOnRun && !bGameOver && pCurrentMap->sName == "village" && false) {
-            totalTimeElapsed += fElapsedTime;
-            float recalibratePathInterval = 2.0f;
-            if (totalTimeElapsed >= recalibratePathInterval) {
-                totalTimeElapsed = 0.0f;
-                enemyVelocity += 0.5f;
-                if (enemyVelocity >= maxVelocity) {
-                    enemyVelocity = maxVelocity;
-                }
-                // cancel any previously running command
-                for (auto cmd: mScript.mListCommands) {
-                    cmd->bCompleted = true;
-                }
-
-                RPG_Dynamic *enemy = findObjectByName(mVecDynamics, "Gonzo");
-                if(enemy){
-                    auto aStarResult = pathFinder->solveAStar(enemy->px, enemy->py, player->px,
-                                                              player->py);
-                    for (auto coord: aStarResult) {
-                        float distanceX = std::fabs(coord.first - enemy->px);
-                        float distanceY = std::fabs(coord.second - enemy->py);
-                        float targetDuration = (distanceX + distanceY) / enemyVelocity;
-                        mScript.addCommand(
-                                new Command_MoveTo(enemy, coord.first, coord.second, targetDuration, false));
-                    }
-                }
-            }
-        }
     }
     return true;
 }

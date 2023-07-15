@@ -4,6 +4,9 @@
 #pragma once
 #include "SimpleGameEngine.h"
 
+class cMap;
+class PathFinder;
+
 class RPG_Dynamic {
 public:
     RPG_Dynamic(std::string name);
@@ -15,7 +18,7 @@ public:
     std::string sName;
 
     virtual void drawSelf(GameEngine *engine, float fOffsetX, float fOffsetY, int nTileWidth, int nTileHeight) = 0;
-    virtual void update(float fElapsedTime) = 0;
+    virtual void update(float fElapsedTime, RPG_Dynamic *player = nullptr, cMap *map = nullptr);
 };
 
 class DynamicCreature : public RPG_Dynamic {
@@ -35,8 +38,20 @@ public:
     DynamicCreature(std::string name, LTexture *spr, int sprW, int sprH, int nSpritesInARow);
 
     void drawSelf(GameEngine *engine, float fOffsetX, float fOffsetY, int nTileWidth, int nTileHeight) override;
+    void update(float fElapsedTime, RPG_Dynamic *player = nullptr, cMap *map = nullptr) override;
+    virtual void behaviour(float fElapsedTime, RPG_Dynamic *player = nullptr, cMap *map = nullptr);
+};
 
-    void update(float fElapsedTime) override;
+class DynamicCreatureEnemy : public DynamicCreature {
+protected:
+    PathFinder *pathFinder;
+    std::vector<std::pair<int, int>> pathToFollow;
+    float stateTick;
+    float pathTick;
+    int pathIdx;
+public:
+    DynamicCreatureEnemy();
+    void behaviour(float fElapsedTime, RPG_Dynamic *player = nullptr,cMap *map = nullptr) override;
 };
 
 class Teleport : public RPG_Dynamic {
@@ -48,5 +63,4 @@ public:
 
     void drawSelf(GameEngine *engine, float fOffsetX, float fOffsetY, int nTileWidth, int nTileHeight) override;
 
-    void update(float fElapsedTime) override;
 };

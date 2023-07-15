@@ -66,10 +66,10 @@ cMap_Village::cMap_Village() {
 bool cMap_Village::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
     // add teleport square
     vecDynamics.push_back(new Teleport(12.0, 6.0, "home", 5.0, 12.0));
-    DynamicCreature *gonzo = new DynamicCreature("Gonzo", ASSETS.getSprite(3), 32, 32, 4);
-    gonzo->px = 10;
-    gonzo->py = 3;
-    vecDynamics.push_back(gonzo);
+    DynamicCreature *enemy = new DynamicCreatureEnemy();
+    enemy->px = 10;
+    enemy->py = 3;
+    vecDynamics.push_back(enemy);
     return true;
 }
 
