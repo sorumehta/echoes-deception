@@ -212,8 +212,8 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
             }
         }
 
-        object->px = fNewObjectPosX;
-        object->py = fNewObjectPosY;
+        object->px = fDynamicObjPosX;
+        object->py = fDynamicObjPosY;
 
         // apply friction
         object->vx += -4.0f * object->vx * fElapsedTime;
