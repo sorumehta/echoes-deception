@@ -15,7 +15,7 @@
 class RPG_Game : public GameEngine {
 private:
     cMap *pCurrentMap = nullptr;
-    RPG_Dynamic *player = nullptr;
+    DynamicCreature *player = nullptr;
     // positions in tiles space
     float fCameraPosX = 0.0f;
     float fCameraPosY = 0.0f;

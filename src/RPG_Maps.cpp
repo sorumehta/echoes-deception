@@ -3,9 +3,7 @@
 //
 #include <fstream>
 #include <map>
-#include <utility>
 #include "RPG_Maps.h"
-#include "RPG_Assets.h"
 
 ScriptProcessor *cMap::g_scriptProcessor = nullptr;
 
@@ -14,6 +12,7 @@ cMap::cMap(){
     nHeight = 0;
     aIndices = nullptr;
     aIsSolid = nullptr;
+    hasPlayerBeenHere = false;
 }
 
 cMap::~cMap() {
@@ -58,6 +57,8 @@ bool cMap::onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dynamic *ta
     return false;
 }
 
+void cMap::onChange(RPG_Dynamic *player) {}
+
 cMap_Village::cMap_Village() {
 
     Create("../res/village.txt",  "village");
@@ -85,6 +86,22 @@ bool cMap_Village::onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dyn
     return false;
 }
 
+void cMap_Village::onChange(RPG_Dynamic *player) {
+    if(hasPlayerBeenHere){
+        return;
+    }
+    g_scriptProcessor->addCommand(
+            new Command_ShowDialog(
+                    {"Welcome.", "Today you have a secret meeting with Gonzo at the back of your house", "You have a plan to deceive him"},
+                    {0xFF, 0, 0}));
+    g_scriptProcessor->addCommand(new Command_ShowDialog({"Gonzo:", "Where is my stuff?"}));
+    g_scriptProcessor->addCommand(new Command_ShowDialog({"You:", "Money first"}));
+    g_scriptProcessor->addCommand(new Command_ShowDialog({"Gonzo:", "Its here, take it. Now give me my stuff"}));
+    g_scriptProcessor->addCommand(new Command_ShowDialog({"You:", "I don't have the stuff, haha.", "Catch me if you can"}));
+    g_scriptProcessor->addCommand(
+            new Command_ShowDialog({"Run to the main door", "Don't let Gonzo catch you"}, {0xFF, 0, 0}));
+}
+
 cMap_Home::cMap_Home() {
     Create("../res/home.txt",  "home");
 }
@@ -103,7 +120,11 @@ bool cMap_Home::onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dynami
 
 bool cMap_Home::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
     // add teleport square
-//    vecDynamics.push_back(new Teleport(5.0, 13.0, "village", 12.0, 7.0));
-//    vecDynamics.push_back(new Teleport(4.0, 13.0, "village", 12.0, 7.0));
+    vecDynamics.push_back(new Teleport(5.0, 13.0, "village", 12.0, 7.0));
+    vecDynamics.push_back(new Teleport(4.0, 13.0, "village", 12.0, 7.0));
     return true;
+}
+
+void cMap_Home::onChange(RPG_Dynamic *player) {
+    g_scriptProcessor->addCommand(new Command_ShowDialog({"Welcome home, son"}));
 }

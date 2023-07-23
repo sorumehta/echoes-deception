@@ -21,21 +21,7 @@ void RPG_Game::handleInputEvent(int eventType, int keyCode, float fElapsedTime) 
 
             }
         }
-        if (keyCode == SDLK_s) {
-            if(!gameStarted) {
-                gameStarted = true;
-                mScript.addCommand(
-                        new Command_ShowDialog(
-                                {"Welcome.", "Today you have a secret meeting with Gonzo at the back of your house", "You have a plan to deceive him"},
-                                {0xFF, 0, 0}));
-                mScript.addCommand(new Command_ShowDialog({"Gonzo:", "Where is my stuff?"}));
-                mScript.addCommand(new Command_ShowDialog({"You:", "Money first"}));
-                mScript.addCommand(new Command_ShowDialog({"Gonzo:", "Its here, take it. Now give me my stuff"}));
-                mScript.addCommand(new Command_ShowDialog({"You:", "I don't have the stuff, haha.", "Catch me if you can"}));
-                mScript.addCommand(
-                        new Command_ShowDialog({"Run to the main door", "Don't let Gonzo catch you"}, {0xFF, 0, 0}));
-            }
-        }
+
     }
 }
 
@@ -58,7 +44,6 @@ void RPG_Game::handleInputState(const unsigned char *state, int mouseX, int mous
 }
 
 bool RPG_Game::onInit() {
-    gameStarted = false;
     playerOnRun = false;
     bGameOver = false;
     totalTimeElapsed = 0.0f;
@@ -120,6 +105,8 @@ void RPG_Game::changeMap(std::string mapName, float x, float y) {
     player->py = y;
     // append the map dynamics (teleports etc) to the dynamic objects vector
     pCurrentMap->PopulateDynamics(mVecDynamics);
+    pCurrentMap->onChange(player);
+    pCurrentMap->hasPlayerBeenHere = true;
 }
 
 bool RPG_Game::onFrameUpdate(float fElapsedTime) {
@@ -188,11 +175,10 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
                 if (dyn->bSolidVsDyn && object->bSolidVsDyn) {
                     if(doObjectsOverlap(fDynamicObjPosX, fDynamicObjPosY, dyn->px, dyn->py)){
                         if(!dyn->bFriendly){ // uh oh
-                            mScript.addCommand(new Command_ShowDialog({"Game over, Gonzo owns you now", "Press ESC."}));
+                            mScript.addCommand(new Command_ShowDialog({"Game over.", "Cheating with Gonzo was a bad idea", "Press ESC to quit"}));
                             bGameOver = true;
                         }
                     }
-
                 } else { // object can interact with things
                     // object is player
                     if (object->sName == player->sName) {
@@ -217,7 +203,7 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
         if (std::abs(object->vy) < 0.01f) {
             object->vy = 0.0f;
         }
-        if(gameStarted && playerOnRun){
+        if( playerOnRun){
             object->update(fElapsedTime, player, pCurrentMap);
         }
 
@@ -260,24 +246,15 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
         displayDialog(vecDialogToShow, 20, 20);
     }
     mScript.processCommand(fElapsedTime);
-    if (!gameStarted) {
-        drawText("Press S to start the game", 200, 200);
-    } else{
         if(mScript.isListEmpty()){
             playerOnRun = true;
         }
-        if(pCurrentMap->sName == "home"){
-            bGameOver = true;
-            mScript.addCommand(new Command_ShowDialog({"Congratulations, you safely reached home!", "End of Part 1", "Press ESC to exit"}));
-        }
-    }
     return true;
 }
 
-
 int main() {
     RPG_Game echoes;
-    echoes.init(30 * 24, 16 * 24, "Echoes Of Deception");
+    echoes.init(30 * 24, 16 * 24, "Skyward Scammer");
     echoes.startGameLoop();
     return 0;
 }
