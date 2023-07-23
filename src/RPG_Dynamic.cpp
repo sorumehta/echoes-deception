@@ -103,8 +103,22 @@ Teleport::Teleport(float x, float y, std::string targetMap, float tx, float ty):
     bSolidVsMap = false;
 }
 
-DynamicCreatureEnemy::DynamicCreatureEnemy()
-        : DynamicCreature("Enemy", ASSETS.getSprite(3), 32, 32, 4) {
+
+void Balloon::drawSelf(GameEngine *engine, float fOffsetX, float fOffsetY, int nTileWidth, int nTileHeight) {
+    mSprite->drawTexture((px - fOffsetX)*nTileWidth, (py - fOffsetY)*nTileHeight, nTileWidth, nTileHeight);
+}
+
+
+
+Balloon::Balloon(float x, float y, BalloonType balloonType): RPG_Dynamic("Balloon") {
+    px = x;
+    py = y;
+    type = balloonType;
+    mSprite = ASSETS.getSprite(balloonType);
+}
+
+DynamicCreatureEnemy::DynamicCreatureEnemy(EnemyType enemyType, std::string name)
+        : DynamicCreature(name, ASSETS.getSprite(enemyType), 32, 32, 4) {
     bFriendly = false;
     pathFinder = nullptr;
     stateTick = 2.0f; // enemy makes a decision every these seconds

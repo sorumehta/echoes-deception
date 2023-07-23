@@ -23,6 +23,10 @@ RPG_Assets::RPG_Assets() {
     mSprNames[7] = "house/8";
     mSprNames[8] = "house/7";
     mSprNames[9] = "tree";
+    mSprNames[10] = "balloon_red";
+    mSprNames[11] = "balloon_black";
+    mSprNames[12] = "balloon_green";
+    mSprNames[13] = "balloon_blue";
     mSprNames[14] = "grass";
     mSprNames[16] = "house/6";
     mSprNames[17] = "house/5";

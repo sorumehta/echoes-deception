@@ -43,14 +43,20 @@ public:
 };
 
 class DynamicCreatureEnemy : public DynamicCreature {
+public:
+    enum EnemyType {
+        MAN = 3,
+        WOMAN = 4
+    };
 protected:
     PathFinder *pathFinder;
+    EnemyType type;
     std::vector<std::pair<int, int>> pathToFollow;
     float stateTick;
     float pathTick;
     int pathIdx;
 public:
-    DynamicCreatureEnemy();
+    DynamicCreatureEnemy(EnemyType enemyType, std::string name);
     void behaviour(float fElapsedTime, RPG_Dynamic *player = nullptr,cMap *map = nullptr) override;
 };
 
@@ -60,6 +66,24 @@ public:
     float mapPosX;
     float mapPosY;
     Teleport(float x, float y, std::string targetMap, float tx, float ty);
+
+    void drawSelf(GameEngine *engine, float fOffsetX, float fOffsetY, int nTileWidth, int nTileHeight) override;
+
+};
+
+class Balloon : public RPG_Dynamic {
+public:
+    enum BalloonType {
+        RED = 10,
+        BLACK = 11,
+        GREEN = 12,
+        BLUE = 13
+    };
+protected:
+    LTexture *mSprite;
+    BalloonType type;
+public:
+    Balloon(float x, float y, BalloonType balloonType);
 
     void drawSelf(GameEngine *engine, float fOffsetX, float fOffsetY, int nTileWidth, int nTileHeight) override;
 

@@ -67,10 +67,14 @@ cMap_Village::cMap_Village() {
 bool cMap_Village::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
     // add teleport square
     vecDynamics.push_back(new Teleport(12.0, 6.0, "home", 5.0, 12.0));
-    DynamicCreature *enemy = new DynamicCreatureEnemy();
+    DynamicCreature *enemy = new DynamicCreatureEnemy(DynamicCreatureEnemy::MAN, "Gonzo");
     enemy->px = 14;
     enemy->py = 3;
     vecDynamics.push_back(enemy);
+    DynamicCreature *enemy2 = new DynamicCreatureEnemy(DynamicCreatureEnemy::WOMAN, "Ginzi");
+    enemy2->px = 8;
+    enemy2->py = 5;
+    vecDynamics.push_back(enemy2);
     return true;
 }
 
@@ -122,9 +126,12 @@ bool cMap_Home::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
     // add teleport square
     vecDynamics.push_back(new Teleport(5.0, 13.0, "village", 12.0, 7.0));
     vecDynamics.push_back(new Teleport(4.0, 13.0, "village", 12.0, 7.0));
+    vecDynamics.push_back(new Balloon(6.0, 10.0, Balloon::RED));
+    vecDynamics.push_back(new Balloon(6.0, 6.0, Balloon::GREEN));
+    vecDynamics.push_back(new Balloon(10.0, 10.0, Balloon::BLACK));
+    vecDynamics.push_back(new Balloon(12.0, 4.0, Balloon::BLUE));
     return true;
 }
 
 void cMap_Home::onChange(RPG_Dynamic *player) {
-    g_scriptProcessor->addCommand(new Command_ShowDialog({"Welcome home, son"}));
 }

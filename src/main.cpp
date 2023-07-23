@@ -173,12 +173,33 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
             if (dyn != object) {
                 // player must not overlap if solidVDyn is true
                 if (dyn->bSolidVsDyn && object->bSolidVsDyn) {
-                    if(doObjectsOverlap(fDynamicObjPosX, fDynamicObjPosY, dyn->px, dyn->py)){
-                        if(!dyn->bFriendly){ // uh oh
+                    if(doObjectsOverlap(fDynamicObjPosX, object->py, dyn->px, dyn->py)){
+                        if(!dyn->bFriendly && object == player){ // uh oh
                             mScript.addCommand(new Command_ShowDialog({"Game over.", "Cheating with Gonzo was a bad idea", "Press ESC to quit"}));
                             bGameOver = true;
+                        } else{
+                            // resolve collision
+                            // First Check Horizontally - Check Left
+                            if (object->vx <= 0)
+                                fDynamicObjPosX = dyn->px + 1.0f;
+                            else
+                                fDynamicObjPosX = dyn->px - 1.0f;
                         }
                     }
+                    if(doObjectsOverlap(fDynamicObjPosX, fDynamicObjPosY, dyn->px, dyn->py)){
+                        if(!dyn->bFriendly && object == player){ // uh oh
+                            mScript.addCommand(new Command_ShowDialog({"Game over.", "Cheating with Gonzo was a bad idea", "Press ESC to quit"}));
+                            bGameOver = true;
+                        } else{
+                            // resolve collision
+                            // First Check Vertically - Check Left
+                            if (object->vy <= 0)
+                                fDynamicObjPosY = dyn->py + 1.0f;
+                            else
+                                fDynamicObjPosY = dyn->py - 1.0f;
+                        }
+                    }
+
                 } else { // object can interact with things
                     // object is player
                     if (object->sName == player->sName) {
