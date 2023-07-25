@@ -66,14 +66,14 @@ cMap_Village::cMap_Village() {
 
 bool cMap_Village::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
     // add teleport square
-    vecDynamics.push_back(new Teleport(12.0, 6.0, "home", 5.0, 12.0));
+    vecDynamics.push_back(new Teleport(12.0, 6.0, "home", 5.0, 10.0));
     DynamicCreature *enemy = new DynamicCreatureEnemy(DynamicCreatureEnemy::MAN, "Gonzo");
-    enemy->px = 14;
+    enemy->px = 16;
     enemy->py = 3;
     vecDynamics.push_back(enemy);
     DynamicCreature *enemy2 = new DynamicCreatureEnemy(DynamicCreatureEnemy::WOMAN, "Ginzi");
-    enemy2->px = 8;
-    enemy2->py = 5;
+    enemy2->px = 10;
+    enemy2->py = 10;
     vecDynamics.push_back(enemy2);
     return true;
 }
@@ -96,8 +96,7 @@ void cMap_Village::onChange(RPG_Dynamic *player) {
     }
     g_scriptProcessor->addCommand(
             new Command_ShowDialog(
-                    {"Welcome.", "Today you have a secret meeting with Gonzo at the back of your house", "You have a plan to deceive him"},
-                    {0xFF, 0, 0}));
+                    {"Welcome.", "Today you have a secret meeting with Gonzo at the back of your house", "You have a plan to deceive him"}));
     g_scriptProcessor->addCommand(new Command_ShowDialog({"Gonzo:", "Where is my stuff?"}));
     g_scriptProcessor->addCommand(new Command_ShowDialog({"You:", "Money first"}));
     g_scriptProcessor->addCommand(new Command_ShowDialog({"Gonzo:", "Its here, take it. Now give me my stuff"}));
@@ -107,11 +106,21 @@ void cMap_Village::onChange(RPG_Dynamic *player) {
 }
 
 cMap_Home::cMap_Home() {
+    nBalloonsCollected = 0;
+    nTargetBalloons = 4;
     Create("../res/home.txt",  "home");
 }
 
 bool cMap_Home::onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dynamic *target, cMap::NATURE nature) {
-    if(target->sName == "Teleport"){
+    if (target->sName == "Balloon") {
+        vecDynObjs.erase(std::remove(vecDynObjs.begin(), vecDynObjs.end(), target), vecDynObjs.end());
+        nBalloonsCollected++;
+        if(nBalloonsCollected == nTargetBalloons){
+            vecDynObjs.push_back(new Teleport(5.0, 12.0, "victory", 12.0, 7.0));
+            vecDynObjs.push_back(new Teleport(4.0, 12.0, "victory", 12.0, 7.0));
+        }
+    }
+    else if(target->sName == "Teleport"){
         g_scriptProcessor->addCommand(new Command_ChangeMap(
                 ((Teleport *)target)->targetMapName,
                 ((Teleport *)target)->mapPosX,
@@ -119,19 +128,48 @@ bool cMap_Home::onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dynami
         ));
         return true;
     }
+
     return false;
 }
 
 bool cMap_Home::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
-    // add teleport square
-    vecDynamics.push_back(new Teleport(5.0, 13.0, "village", 12.0, 7.0));
-    vecDynamics.push_back(new Teleport(4.0, 13.0, "village", 12.0, 7.0));
+
     vecDynamics.push_back(new Balloon(6.0, 10.0, Balloon::RED));
     vecDynamics.push_back(new Balloon(6.0, 6.0, Balloon::GREEN));
-    vecDynamics.push_back(new Balloon(10.0, 10.0, Balloon::BLACK));
+    vecDynamics.push_back(new Balloon(11.0, 8.0, Balloon::BLACK));
     vecDynamics.push_back(new Balloon(12.0, 4.0, Balloon::BLUE));
+    DynamicCreature *enemy = new DynamicCreatureEnemy(DynamicCreatureEnemy::MAN, "Gonzo");
+    enemy->px = 4;
+    enemy->py = 11.5;
+    vecDynamics.push_back(enemy);
+    DynamicCreature *enemy2 = new DynamicCreatureEnemy(DynamicCreatureEnemy::WOMAN, "Ginzi");
+    enemy2->px = 4;
+    enemy2->py = 12;
+    vecDynamics.push_back(enemy2);
     return true;
 }
 
 void cMap_Home::onChange(RPG_Dynamic *player) {
+    g_scriptProcessor->addCommand(
+            new Command_MoveTo(player, 5, 6, 2.0f));
+    g_scriptProcessor->addCommand(
+            new Command_ShowDialog(
+                    {"You have entered a closed balloon shop.", "Collect all the balloons in the shop"}));
+
+}
+
+Victory::Victory() {
+    Create("../res/village.txt",  "victory");
+}
+
+void Victory::onChange(RPG_Dynamic *player) {
+    g_scriptProcessor->addCommand(new Command_ShowDialog({"Well done, you flew away using the balloons!"}));
+}
+
+bool Victory::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
+    return true;
+}
+
+bool Victory::onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dynamic *target, cMap::NATURE nature) {
+    return true;
 }

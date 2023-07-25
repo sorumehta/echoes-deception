@@ -13,6 +13,9 @@ RPG_Dynamic * RPG_Game::findObjectByName (std::vector<RPG_Dynamic *> vectorDyns,
 void RPG_Game::handleInputEvent(int eventType, int keyCode, float fElapsedTime) {
     if (eventType == SDL_KEYDOWN) {
         if (keyCode == SDLK_SPACE) {
+            if(bGameOver){
+                std::cout << "Game is already over?" << std::endl;
+            }
             if (!mScript.bUserControlEnabled && !bGameOver) {
                 if(bShowDialog){
                     bShowDialog = false;
@@ -54,15 +57,6 @@ bool RPG_Game::onInit() {
     ASSETS.loadMaps();
     player = new DynamicCreature("Player", ASSETS.getSprite(PLAYER_SPR_IDX), PLAYER_SPR_W, PLAYER_SPR_H, 3);
 
-
-//        DynamicCreature *dynObj1 = new DynamicCreature("Gonzo", ASSETS.getSprite(1), 32, 32, 4);
-//        dynObj1->px = 5;
-//        dynObj1->py = 5;
-
-    // player is always the first object in the vector
-//        mVecDynamics.emplace_back(player);
-//        mVecDynamics.emplace_back(dynObj1);
-
     nTileWidth = 24;
     nTileHeight = 24;
 //        pCurrentMap = ASSETS.getMap("village");
@@ -98,6 +92,7 @@ void RPG_Game::displayDialog(std::vector<std::string> vecLines, int dialogBoxPos
 
 // change map when player is teleported
 void RPG_Game::changeMap(std::string mapName, float x, float y) {
+    playerOnRun = false;
     mVecDynamics.clear();
     mVecDynamics.emplace_back(player); // player is the first object in the vector
     pCurrentMap = ASSETS.getMap(mapName);
@@ -107,6 +102,9 @@ void RPG_Game::changeMap(std::string mapName, float x, float y) {
     pCurrentMap->PopulateDynamics(mVecDynamics);
     pCurrentMap->onChange(player);
     pCurrentMap->hasPlayerBeenHere = true;
+    if(pCurrentMap->sName == "victory"){
+        bGameOver = true;
+    }
 }
 
 bool RPG_Game::onFrameUpdate(float fElapsedTime) {
@@ -227,7 +225,6 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
         if( playerOnRun){
             object->update(fElapsedTime, player, pCurrentMap);
         }
-
     }
     fCameraPosX = player->px;
     fCameraPosY = player->py;
@@ -267,9 +264,9 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
         displayDialog(vecDialogToShow, 20, 20);
     }
     mScript.processCommand(fElapsedTime);
-        if(mScript.isListEmpty()){
-            playerOnRun = true;
-        }
+    if(mScript.isListEmpty() && !playerOnRun){
+        playerOnRun = true;
+    }
     return true;
 }
 

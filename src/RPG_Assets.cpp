@@ -73,6 +73,7 @@ void RPG_Assets::loadMaps() {
     };
     load(new cMap_Village());
     load(new cMap_Home());
+    load(new Victory());
 }
 
 cMap *RPG_Assets::getMap(std::string mapName) {

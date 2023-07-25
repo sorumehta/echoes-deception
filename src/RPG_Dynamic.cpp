@@ -115,6 +115,7 @@ Balloon::Balloon(float x, float y, BalloonType balloonType): RPG_Dynamic("Balloo
     py = y;
     type = balloonType;
     mSprite = ASSETS.getSprite(balloonType);
+    bSolidVsDyn = false;
 }
 
 DynamicCreatureEnemy::DynamicCreatureEnemy(EnemyType enemyType, std::string name)
@@ -132,24 +133,30 @@ void DynamicCreatureEnemy::behaviour(float fElapsedTime, RPG_Dynamic *player,cMa
     }
     stateTick -= fElapsedTime;
     pathTick -= fElapsedTime;
-    if (stateTick <= 0){
+    float fDiffX = player->px - px;
+    float fDiffY = player->py - py;
+    float fDistance = std::sqrtf(fDiffX*fDiffX + fDiffY*fDiffY);
+    if(fDistance < 4.0f){
+        vx = (fDiffX / fDistance) * 2.0f;
+        vy = (fDiffY / fDistance) * 2.0f;
+    } else if (stateTick <= 0){
         pathToFollow.clear();
         pathToFollow = pathFinder->solveAStar(px, py, player->px, player->py);
-        stateTick += 2.0f;
+        stateTick = 2.0f;
         pathTick = 0.5f;
         pathIdx = 0;
     }
-    else{
-        // we need pathTick counter because we need some time for change in velocity to take effect
-        if(pathTick <= 0 && !pathToFollow.empty() && pathIdx < pathToFollow.size()){
+    // we need pathTick counter because we need some time for change in velocity to take effect
+    else if(pathTick <= 0 && !pathToFollow.empty() && pathIdx < pathToFollow.size()){
             std::pair<int, int> targetCoord = pathToFollow[pathIdx];
             // set the position to the expected position
             float fTargetX = targetCoord.first - px;
             float fTargetY = targetCoord.second - py;
-            vx = (fTargetX) * 4.0f;
-            vy = (fTargetY) * 4.0f;
+            float fTargetDist = std::sqrtf(fTargetX*fTargetX + fTargetY*fTargetY);
+            vx = (fTargetX/fTargetDist) * 3.5f;
+            vy = (fTargetY/fTargetDist) * 3.5f;
             pathIdx++;
-            pathTick += 0.5f;
+            pathTick += 0.2f;
         }
-    }
+
 }
