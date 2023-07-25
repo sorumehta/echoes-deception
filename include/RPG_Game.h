@@ -26,7 +26,6 @@ private:
     bool gameStarted;
     bool playerOnRun;
     float totalTimeElapsed;
-    bool bGameOver;
     float enemyVelocity = 4.0f;
     std::pair<int, int> homeLocation = std::make_pair(12, 6);
     std::vector<std::string> vecDialogToShow;

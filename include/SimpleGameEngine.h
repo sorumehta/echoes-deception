@@ -16,7 +16,9 @@ private:
     SDL_Texture *mTexture = nullptr;
     int mWidth;
     int mHeight;
+
 public:
+
     LTexture();
 
     ~LTexture();
@@ -55,7 +57,10 @@ protected:
     int mWindowHeight;
     int FONT_SIZE;
 
+
 public:
+    bool bPlayerWon = false;
+    bool bGameOver = false;
     GameEngine();
     static SDL_Window *getWindow();
     static SDL_Renderer *getRenderer();
@@ -67,7 +72,7 @@ public:
     virtual bool onInit() = 0;
     virtual void handleInputState(const unsigned char *keyboardState, int mouseX, int mouseY, float secPerFrame);
     virtual void handleInputEvent(int eventType, int keyCode, float fElapsedTime );
-
+    Uint32 get_pixel(SDL_Surface *surface, float sx, float sy);
     static bool drawPoint(int x, int y, Color color = {0xFF, 0xFF, 0xFF});
     static bool drawLine(int x1, int y1, int x2, int y2, Color color = {0xFF, 0xFF, 0xFF});
     static bool fillRect(int x, int y, int w, int h, Color color = {0xFF, 0xFF, 0xFF});

@@ -157,19 +157,3 @@ void cMap_Home::onChange(RPG_Dynamic *player) {
                     {"You have entered a closed balloon shop.", "Collect all the balloons in the shop"}));
 
 }
-
-Victory::Victory() {
-    Create("../res/village.txt",  "victory");
-}
-
-void Victory::onChange(RPG_Dynamic *player) {
-    g_scriptProcessor->addCommand(new Command_ShowDialog({"Well done, you flew away using the balloons!"}));
-}
-
-bool Victory::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
-    return true;
-}
-
-bool Victory::onInteraction(std::vector<RPG_Dynamic *> &vecDynObjs, RPG_Dynamic *target, cMap::NATURE nature) {
-    return true;
-}
