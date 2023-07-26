@@ -124,6 +124,7 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
     };
     if(bPlayerWon){
         // if player won, just show victory scene and exit early
+        playSound("trumpet");
         bool result = victoryScene.update(mWindowWidth, mWindowHeight, fElapsedTime);
         main_guy->drawTexture(mWindowWidth/2, mWindowHeight/2, 36, 36);
         balloons->drawTexture(mWindowWidth/2, mWindowHeight/2 - 50, 72, 72);
@@ -190,6 +191,7 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
                     if(doObjectsOverlap(fDynamicObjPosX, object->py, dyn->px, dyn->py)){
                         if(!dyn->bFriendly && object == player){ // uh oh
                             mScript.addCommand(new Command_ShowDialog({"Game over.", "Cheating with Gonzo was a bad idea", "Press ESC to quit"}));
+                            playSound("orchestra");
                             bGameOver = true;
                         } else{
                             // resolve collision
@@ -203,6 +205,7 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
                     if(doObjectsOverlap(fDynamicObjPosX, fDynamicObjPosY, dyn->px, dyn->py)){
                         if(!dyn->bFriendly && object == player){ // uh oh
                             mScript.addCommand(new Command_ShowDialog({"Game over.", "Cheating with Gonzo was a bad idea", "Press ESC to quit"}));
+                            playSound("orchestra");
                             bGameOver = true;
                         } else{
                             // resolve collision
