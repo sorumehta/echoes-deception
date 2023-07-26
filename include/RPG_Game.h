@@ -10,6 +10,7 @@
 #include "RPG_Dynamic.h"
 #include "RPG_Commands.h"
 #include "PathFinder.h"
+#include "Pseudo3DPlane.h"
 
 
 class RPG_Game : public GameEngine {
@@ -23,15 +24,14 @@ private:
     int nTileHeight{};
     ScriptProcessor mScript;
     std::vector<RPG_Dynamic *> mVecDynamics;
-    bool gameStarted;
     bool playerOnRun;
-    float totalTimeElapsed;
-    float enemyVelocity = 4.0f;
-    std::pair<int, int> homeLocation = std::make_pair(12, 6);
     std::vector<std::string> vecDialogToShow;
     bool bShowDialog = false;
-    float fDialogX = 0.0f;
-    float fDialogY = 0.0f;
+    bool bPlayerWon = false;
+    bool bGameOver = false;
+    LTexture *main_guy;
+    LTexture *balloons;
+    Pseudo3DPlane victoryScene;
 public:
     void handleInputEvent(int eventType, int keyCode, float fElapsedTime) override;
 

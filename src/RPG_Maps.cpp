@@ -107,7 +107,7 @@ void cMap_Village::onChange(RPG_Dynamic *player) {
 
 cMap_Home::cMap_Home() {
     nBalloonsCollected = 0;
-    nTargetBalloons = 4;
+    nTargetBalloons = 6;
     Create("../res/home.txt",  "home");
 }
 
@@ -136,8 +136,10 @@ bool cMap_Home::PopulateDynamics(std::vector<RPG_Dynamic *> &vecDynamics) {
 
     vecDynamics.push_back(new Balloon(6.0, 10.0, Balloon::RED));
     vecDynamics.push_back(new Balloon(6.0, 6.0, Balloon::GREEN));
+    vecDynamics.push_back(new Balloon(2.0, 2.0, Balloon::RED));
+    vecDynamics.push_back(new Balloon(13.0, 2.0, Balloon::GREEN));
     vecDynamics.push_back(new Balloon(11.0, 8.0, Balloon::BLACK));
-    vecDynamics.push_back(new Balloon(12.0, 4.0, Balloon::BLUE));
+    vecDynamics.push_back(new Balloon(13.0, 4.0, Balloon::BLUE));
     DynamicCreature *enemy = new DynamicCreatureEnemy(DynamicCreatureEnemy::MAN, "Gonzo");
     enemy->px = 4;
     enemy->py = 11.5;
@@ -154,6 +156,6 @@ void cMap_Home::onChange(RPG_Dynamic *player) {
             new Command_MoveTo(player, 5, 6, 2.0f));
     g_scriptProcessor->addCommand(
             new Command_ShowDialog(
-                    {"You have entered a closed balloon shop.", "Collect all the balloons in the shop"}));
+                    {"You have entered a closed balloon shop.", "Collect all the balloons in the shop and then exit"}));
 
 }

@@ -52,7 +52,6 @@ void RPG_Game::handleInputState(const unsigned char *state, int mouseX, int mous
 bool RPG_Game::onInit() {
     playerOnRun = false;
     bGameOver = false;
-    totalTimeElapsed = 0.0f;
     // becuase this is static, this would enable the subclasses to access the game object as well
     RPG_Commands::engine = this;
     cMap::g_scriptProcessor = &mScript;
@@ -69,6 +68,10 @@ bool RPG_Game::onInit() {
     soundWavFiles["trumpet"] = "../res/sound/trumpet.wav";
     soundWavFiles["orchestra"] = "../res/sound/orchestra.wav";
     loadSoundEffects(soundWavFiles);
+    main_guy = new LTexture();
+    main_guy->loadTextureFromFile("../res/graphics/main_guy_back.png");
+    balloons = new LTexture();
+    balloons->loadTextureFromFile("../res/graphics/balloons.png");
     return true;
 }
 
@@ -97,6 +100,11 @@ void RPG_Game::displayDialog(std::vector<std::string> vecLines, int dialogBoxPos
 void RPG_Game::changeMap(std::string mapName, float x, float y) {
     playerOnRun = false;
     mVecDynamics.clear();
+    if(mapName == "victory"){
+        bGameOver = true;
+        bPlayerWon = true;
+        return;
+    }
     mVecDynamics.emplace_back(player); // player is the first object in the vector
     pCurrentMap = ASSETS.getMap(mapName);
     player->px = x;
@@ -105,9 +113,7 @@ void RPG_Game::changeMap(std::string mapName, float x, float y) {
     pCurrentMap->PopulateDynamics(mVecDynamics);
     pCurrentMap->onChange(player);
     pCurrentMap->hasPlayerBeenHere = true;
-    if(pCurrentMap->sName == "victory"){
-        bGameOver = true;
-    }
+
 }
 
 bool RPG_Game::onFrameUpdate(float fElapsedTime) {
@@ -116,7 +122,14 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
         return px1 < (px2 + 1.0f) && (px1 + 1.0f) > px2 &&
                py1 < (py2 + 1.0f) && (py1 + 1.0f) > py2;
     };
-
+    if(bPlayerWon){
+        // if player won, just show victory scene and exit early
+        bool result = victoryScene.update(mWindowWidth, mWindowHeight, fElapsedTime);
+        main_guy->drawTexture(mWindowWidth/2, mWindowHeight/2, 36, 36);
+        balloons->drawTexture(mWindowWidth/2, mWindowHeight/2 - 50, 72, 72);
+        drawText("Congratulations, you have completed the game!", 20, 20);
+        return result;
+    }
     float maxVelocity = 10.0f;
     for (auto &object: mVecDynamics) {
         // clamp velocities
