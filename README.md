@@ -26,7 +26,7 @@ chmod +x install.sh
 
 ### Building on Windows:
 
-Not supported yet. You are on your own :)
+I haven't written any installation script for Windows yet. You would need to install sdl2, sdl2_image, sdl2_ttf and sdl2_mixer, and you might have to make adjustments to cmake script too.
 
 ## Running
 
