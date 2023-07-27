@@ -96,13 +96,13 @@ void cMap_Village::onChange(RPG_Dynamic *player) {
     }
     g_scriptProcessor->addCommand(
             new Command_ShowDialog(
-                    {"Welcome.", "Today you have a secret meeting with Gonzo at the back of your house", "You have a plan to deceive him"}));
+                    {"Welcome.", "Today you have a secret meeting with Gonzo", "And you have a plan to scam him"}));
     g_scriptProcessor->addCommand(new Command_ShowDialog({"Gonzo:", "Where is my stuff?"}));
     g_scriptProcessor->addCommand(new Command_ShowDialog({"You:", "Money first"}));
     g_scriptProcessor->addCommand(new Command_ShowDialog({"Gonzo:", "Its here, take it. Now give me my stuff"}));
-    g_scriptProcessor->addCommand(new Command_ShowDialog({"You:", "I don't have the stuff, haha.", "Catch me if you can"}));
+    g_scriptProcessor->addCommand(new Command_ShowDialog({"You:", "I don't have the stuff, haha.", "Catch me if you can!"}));
     g_scriptProcessor->addCommand(
-            new Command_ShowDialog({"Run to the main door", "Don't let Gonzo catch you"}, {0xFF, 0, 0}));
+            new Command_ShowDialog({"Run inside the building", "Don't let Gonzo catch you"}, {0xFF, 0, 0}));
 }
 
 cMap_Home::cMap_Home() {
