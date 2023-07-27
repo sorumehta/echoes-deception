@@ -16,9 +16,6 @@ RPG_Dynamic * RPG_Game::findObjectByName (std::vector<RPG_Dynamic *> vectorDyns,
 void RPG_Game::handleInputEvent(int eventType, int keyCode, float fElapsedTime) {
     if (eventType == SDL_KEYDOWN) {
         if (keyCode == SDLK_SPACE) {
-            if(bGameOver){
-                std::cout << "Game is already over?" << std::endl;
-            }
             if (!mScript.bUserControlEnabled && !bGameOver) {
                 if(bShowDialog){
                     bShowDialog = false;
