@@ -2,33 +2,35 @@
 // Created by Saurabh Mehta on 26/07/23.
 //
 #include "RPG_Game.h"
+#include <algorithm>
 
-RPG_Dynamic * RPG_Game::findObjectByName (std::vector<RPG_Dynamic *> vectorDyns, const char *name) {
-    auto it = std::find_if(vectorDyns.begin(), vectorDyns.end(), [&](RPG_Dynamic *obj){
-        return obj->sName == name;
-    });
-    if(it != vectorDyns.end()){
+RPG_Dynamic *RPG_Game::findObjectByName(std::vector<RPG_Dynamic *> vectorDyns,
+                                        const char *name) {
+    auto it =
+        std::find_if(vectorDyns.begin(), vectorDyns.end(),
+                     [&](RPG_Dynamic *obj) { return obj->sName == name; });
+    if (it != vectorDyns.end()) {
         return *it;
     }
     return nullptr;
 }
 
-void RPG_Game::handleInputEvent(int eventType, int keyCode, float fElapsedTime) {
+void RPG_Game::handleInputEvent(int eventType, int keyCode,
+                                float fElapsedTime) {
     if (eventType == SDL_KEYDOWN) {
         if (keyCode == SDLK_SPACE) {
             if (!mScript.bUserControlEnabled && !bGameOver) {
-                if(bShowDialog){
+                if (bShowDialog) {
                     bShowDialog = false;
                     mScript.completeCommand();
                 }
-
             }
         }
-
     }
 }
 
-void RPG_Game::handleInputState(const unsigned char *state, int mouseX, int mouseY, float secPerFrame) {
+void RPG_Game::handleInputState(const unsigned char *state, int mouseX,
+                                int mouseY, float secPerFrame) {
     if (!mScript.bUserControlEnabled || bGameOver) {
         return;
     }
@@ -49,16 +51,18 @@ void RPG_Game::handleInputState(const unsigned char *state, int mouseX, int mous
 bool RPG_Game::onInit() {
     playerOnRun = false;
     bGameOver = false;
-    // becuase this is static, this would enable the subclasses to access the game object as well
+    // becuase this is static, this would enable the subclasses to access the
+    // game object as well
     RPG_Commands::engine = this;
     cMap::g_scriptProcessor = &mScript;
     ASSETS.loadSprites();
     ASSETS.loadMaps();
-    player = new DynamicCreature("Player", ASSETS.getSprite(PLAYER_SPR_IDX), PLAYER_SPR_W, PLAYER_SPR_H, 3);
+    player = new DynamicCreature("Player", ASSETS.getSprite(PLAYER_SPR_IDX),
+                                 PLAYER_SPR_W, PLAYER_SPR_H, 3);
 
     nTileWidth = 24;
     nTileHeight = 24;
-//        pCurrentMap = ASSETS.getMap("village");
+    //        pCurrentMap = ASSETS.getMap("village");
     changeMap("village", 12, 3);
 
     std::unordered_map<std::string, std::string> soundWavFiles;
@@ -72,37 +76,40 @@ bool RPG_Game::onInit() {
     return true;
 }
 
-void RPG_Game::showDialog(std::vector<std::string> vecLines){
+void RPG_Game::showDialog(std::vector<std::string> vecLines) {
     vecDialogToShow = vecLines;
     bShowDialog = true;
 }
 
-void RPG_Game::displayDialog(std::vector<std::string> vecLines, int dialogBoxPosX, int dialogBoxPosY){
+void RPG_Game::displayDialog(std::vector<std::string> vecLines,
+                             int dialogBoxPosX, int dialogBoxPosY) {
     int nLines = vecLines.size(); // h
-    int maxLineLength = 0; // w
-    for (auto l : vecLines){
-        if (l.size() > maxLineLength){
+    int maxLineLength = 0;        // w
+    for (auto l : vecLines) {
+        if (l.size() > maxLineLength) {
             maxLineLength = l.size();
         }
     }
-    GameEngine::fillRect(dialogBoxPosX, dialogBoxPosY, maxLineLength * 20, nLines * 20, {0, 0, 0xFF});
-    for (int l = 0; l < vecLines.size(); l++){
-        drawText(vecLines[l], dialogBoxPosX, dialogBoxPosY + l*18);
+    GameEngine::fillRect(dialogBoxPosX, dialogBoxPosY, maxLineLength * 20,
+                         nLines * 20, {0, 0, 0xFF});
+    for (int l = 0; l < vecLines.size(); l++) {
+        drawText(vecLines[l], dialogBoxPosX, dialogBoxPosY + l * 18);
     }
-    drawText("press SPACE to continue", dialogBoxPosX, dialogBoxPosY + vecLines.size()*18 + 1);
-
+    drawText("press SPACE to continue", dialogBoxPosX,
+             dialogBoxPosY + vecLines.size() * 18 + 1);
 }
 
 // change map when player is teleported
 void RPG_Game::changeMap(std::string mapName, float x, float y) {
     playerOnRun = false;
     mVecDynamics.clear();
-    if(mapName == "victory"){
+    if (mapName == "victory") {
         bGameOver = true;
         bPlayerWon = true;
         return;
     }
-    mVecDynamics.emplace_back(player); // player is the first object in the vector
+    mVecDynamics.emplace_back(
+        player); // player is the first object in the vector
     pCurrentMap = ASSETS.getMap(mapName);
     player->px = x;
     player->py = y;
@@ -110,26 +117,26 @@ void RPG_Game::changeMap(std::string mapName, float x, float y) {
     pCurrentMap->PopulateDynamics(mVecDynamics);
     pCurrentMap->onChange(player);
     pCurrentMap->hasPlayerBeenHere = true;
-
 }
 
 bool RPG_Game::onFrameUpdate(float fElapsedTime) {
     // utility functions
     auto doObjectsOverlap = [](float px1, float py1, float px2, float py2) {
-        return px1 < (px2 + 1.0f) && (px1 + 1.0f) > px2 &&
-               py1 < (py2 + 1.0f) && (py1 + 1.0f) > py2;
+        return px1 < (px2 + 1.0f) && (px1 + 1.0f) > px2 && py1 < (py2 + 1.0f) &&
+               (py1 + 1.0f) > py2;
     };
-    if(bPlayerWon){
+    if (bPlayerWon) {
         // if player won, just show victory scene and exit early
         playSound("trumpet");
-        bool result = victoryScene.update(mWindowWidth, mWindowHeight, fElapsedTime);
-        main_guy->drawTexture(mWindowWidth/2, mWindowHeight/2, 36, 36);
-        balloons->drawTexture(mWindowWidth/2, mWindowHeight/2 - 50, 72, 72);
+        bool result =
+            victoryScene.update(mWindowWidth, mWindowHeight, fElapsedTime);
+        main_guy->drawTexture(mWindowWidth / 2, mWindowHeight / 2, 36, 36);
+        balloons->drawTexture(mWindowWidth / 2, mWindowHeight / 2 - 50, 72, 72);
         drawText("Congratulations, you have completed the game!", 20, 20);
         return result;
     }
     float maxVelocity = 10.0f;
-    for (auto &object: mVecDynamics) {
+    for (auto &object : mVecDynamics) {
         // clamp velocities
         if (object->vy > maxVelocity) {
             object->vy = maxVelocity;
@@ -147,33 +154,49 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
         float fNewObjectPosX = object->px + object->vx * fElapsedTime;
         float fNewObjectPosY = object->py + object->vy * fElapsedTime;
         // resolve collision along X axis, if any
-        float border = 0.1f; // the border on the tiles to shrink the opaqueness of tiles and make collisions a bit more relaxed
+        float border = 0.1f; // the border on the tiles to shrink the opaqueness
+                             // of tiles and make collisions a bit more relaxed
         if (object->vx < 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + border), static_cast<int>(object->py + border)) ||
-                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + border), static_cast<int>(object->py + 1 - border))) {
-                // cast the new position to an integer and shift by 1 so that the player is on the boundary
-                // of the colliding tile, instead of leaving some space
+            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + border),
+                                      static_cast<int>(object->py + border)) ||
+                pCurrentMap->GetSolid(
+                    static_cast<int>(fNewObjectPosX + border),
+                    static_cast<int>(object->py + 1 - border))) {
+                // cast the new position to an integer and shift by 1 so that
+                // the player is on the boundary of the colliding tile, instead
+                // of leaving some space
                 fNewObjectPosX = static_cast<int>(fNewObjectPosX) + 1;
                 object->vx = 0;
             }
         } else if (object->vx > 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 1 - border), static_cast<int>(object->py + border)) ||
-                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 1 - border), static_cast<int>(object->py + 1 - border))) {
+            if (pCurrentMap->GetSolid(
+                    static_cast<int>(fNewObjectPosX + 1 - border),
+                    static_cast<int>(object->py + border)) ||
+                pCurrentMap->GetSolid(
+                    static_cast<int>(fNewObjectPosX + 1 - border),
+                    static_cast<int>(object->py + 1 - border))) {
                 fNewObjectPosX = static_cast<int>(fNewObjectPosX);
                 object->vx = 0;
             }
         }
         // check collision along y
         if (object->vy < 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + border), static_cast<int>(fNewObjectPosY + border)) ||
-                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 1 - border), static_cast<int>(fNewObjectPosY + border))) {
+            if (pCurrentMap->GetSolid(
+                    static_cast<int>(fNewObjectPosX + border),
+                    static_cast<int>(fNewObjectPosY + border)) ||
+                pCurrentMap->GetSolid(
+                    static_cast<int>(fNewObjectPosX + 1 - border),
+                    static_cast<int>(fNewObjectPosY + border))) {
                 fNewObjectPosY = static_cast<int>(fNewObjectPosY) + 1;
                 object->vy = 0;
             }
         } else if (object->vy > 0) {
-            if (pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + border), static_cast<int>(fNewObjectPosY + 1 - border)) ||
-                pCurrentMap->GetSolid(static_cast<int>(fNewObjectPosX + 1 - border),
-                                      static_cast<int>(fNewObjectPosY + 1 - border))) {
+            if (pCurrentMap->GetSolid(
+                    static_cast<int>(fNewObjectPosX + border),
+                    static_cast<int>(fNewObjectPosY + 1 - border)) ||
+                pCurrentMap->GetSolid(
+                    static_cast<int>(fNewObjectPosX + 1 - border),
+                    static_cast<int>(fNewObjectPosY + 1 - border))) {
                 fNewObjectPosY = static_cast<int>(fNewObjectPosY);
                 object->vy = 0;
             }
@@ -181,16 +204,20 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
 
         float fDynamicObjPosX = fNewObjectPosX;
         float fDynamicObjPosY = fNewObjectPosY;
-        for (auto &dyn: mVecDynamics) {
+        for (auto &dyn : mVecDynamics) {
             if (dyn != object) {
                 // player must not overlap if solidVDyn is true
                 if (dyn->bSolidVsDyn && object->bSolidVsDyn) {
-                    if(doObjectsOverlap(fDynamicObjPosX, object->py, dyn->px, dyn->py)){
-                        if(!dyn->bFriendly && object == player){ // uh oh
-                            mScript.addCommand(new Command_ShowDialog({"Game over.", "Cheating with Gonzo was a bad idea", "Press ESC to quit"}));
+                    if (doObjectsOverlap(fDynamicObjPosX, object->py, dyn->px,
+                                         dyn->py)) {
+                        if (!dyn->bFriendly && object == player) { // uh oh
+                            mScript.addCommand(new Command_ShowDialog(
+                                {"Game over.",
+                                 "Cheating with Gonzo was a bad idea",
+                                 "Press ESC to quit"}));
                             playSound("orchestra");
                             bGameOver = true;
-                        } else{
+                        } else {
                             // resolve collision
                             // First Check Horizontally - Check Left
                             if (object->vx <= 0)
@@ -199,12 +226,16 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
                                 fDynamicObjPosX = dyn->px - 1.0f;
                         }
                     }
-                    if(doObjectsOverlap(fDynamicObjPosX, fDynamicObjPosY, dyn->px, dyn->py)){
-                        if(!dyn->bFriendly && object == player){ // uh oh
-                            mScript.addCommand(new Command_ShowDialog({"Game over.", "Cheating with Gonzo was a bad idea", "Press ESC to quit"}));
+                    if (doObjectsOverlap(fDynamicObjPosX, fDynamicObjPosY,
+                                         dyn->px, dyn->py)) {
+                        if (!dyn->bFriendly && object == player) { // uh oh
+                            mScript.addCommand(new Command_ShowDialog(
+                                {"Game over.",
+                                 "Cheating with Gonzo was a bad idea",
+                                 "Press ESC to quit"}));
                             playSound("orchestra");
                             bGameOver = true;
-                        } else{
+                        } else {
                             // resolve collision
                             // First Check Vertically - Check Left
                             if (object->vy <= 0)
@@ -217,9 +248,10 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
                 } else { // object can interact with things
                     // object is player
                     if (object->sName == player->sName) {
-                        if (doObjectsOverlap(fDynamicObjPosX, fDynamicObjPosY, dyn->px, dyn->py))
-                        {
-                            pCurrentMap->onInteraction(mVecDynamics, dyn, cMap::WALK);
+                        if (doObjectsOverlap(fDynamicObjPosX, fDynamicObjPosY,
+                                             dyn->px, dyn->py)) {
+                            pCurrentMap->onInteraction(mVecDynamics, dyn,
+                                                       cMap::WALK);
                         }
                     }
                 }
@@ -238,7 +270,7 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
         if (std::abs(object->vy) < 0.01f) {
             object->vy = 0.0f;
         }
-        if( playerOnRun){
+        if (playerOnRun) {
             object->update(fElapsedTime, player, pCurrentMap);
         }
     }
@@ -252,8 +284,10 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
     float fOffsetX = fCameraPosX - static_cast<float>(nVisibleTilesX) / 2.0f;
     float fOffsetY = fCameraPosY - static_cast<float>(nVisibleTilesY) / 2.0f;
     // clamp
-    if (fOffsetX < 0) fOffsetX = 0;
-    if (fOffsetY < 0) fOffsetY = 0;
+    if (fOffsetX < 0)
+        fOffsetX = 0;
+    if (fOffsetY < 0)
+        fOffsetY = 0;
     if (fOffsetX > static_cast<float>(pCurrentMap->nWidth - nVisibleTilesX))
         fOffsetX = static_cast<float>(pCurrentMap->nWidth - nVisibleTilesX);
     if (fOffsetY > static_cast<float>(pCurrentMap->nHeight - nVisibleTilesY))
@@ -265,22 +299,24 @@ bool RPG_Game::onFrameUpdate(float fElapsedTime) {
     // we overdraw on the corners to avoid distortion (hacky)
     for (int x = -1; x < nVisibleTilesX + 1; x++) {
         for (int y = -1; y < nVisibleTilesY + 1; y++) {
-            int spriteIdx = pCurrentMap->GetIndex(x + static_cast<int>(fOffsetX),
-                                                  y + static_cast<int>(fOffsetY));
+            int spriteIdx = pCurrentMap->GetIndex(
+                x + static_cast<int>(fOffsetX), y + static_cast<int>(fOffsetY));
             LTexture *texture = ASSETS.getSprite(spriteIdx);
-            texture->drawTexture(static_cast<int>((x - fTileOffsetX) * nTileWidth),
-                                 static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth, nTileHeight);
+            texture->drawTexture(
+                static_cast<int>((x - fTileOffsetX) * nTileWidth),
+                static_cast<int>((y - fTileOffsetY) * nTileHeight), nTileWidth,
+                nTileHeight);
         }
     }
-    for (auto &object: mVecDynamics) {
+    for (auto &object : mVecDynamics) {
         // draw object
         object->drawSelf(this, fOffsetX, fOffsetY, nTileWidth, nTileHeight);
     }
-    if(bShowDialog){
+    if (bShowDialog) {
         displayDialog(vecDialogToShow, 20, 20);
     }
     mScript.processCommand(fElapsedTime);
-    if(mScript.isListEmpty() && !playerOnRun){
+    if (mScript.isListEmpty() && !playerOnRun) {
         playerOnRun = true;
     }
     return true;
