@@ -3,9 +3,10 @@
 //
 
 #include "PathFinder.h"
+#include <algorithm>
 #include <list>
-#include <vector>
 #include <utility>
+#include <vector>
 
 PathFinder::PathFinder(cMap *map) {
     nMapWidth = map->nWidth;
@@ -26,13 +27,16 @@ PathFinder::PathFinder(cMap *map) {
             int idx = y * nMapWidth + x;
             for (int i = -1; i <= 1; i++) {
                 for (int j = -1; j <= 1; j++) {
-                    if (std::abs(i) == std::abs(j)) continue;
+                    if (std::abs(i) == std::abs(j))
+                        continue;
                     int neighborX = x + i;
                     int neighborY = y + j;
 
-                    if (neighborX >= 0 && neighborX < nMapWidth && neighborY >= 0 && neighborY < nMapHeight) {
-                        if(!map->GetSolid(neighborX, neighborY))
-                            nodesArr[idx].vecNeighbours.emplace_back(&nodesArr[neighborY*nMapWidth + neighborX]);
+                    if (neighborX >= 0 && neighborX < nMapWidth &&
+                        neighborY >= 0 && neighborY < nMapHeight) {
+                        if (!map->GetSolid(neighborX, neighborY))
+                            nodesArr[idx].vecNeighbours.emplace_back(
+                                &nodesArr[neighborY * nMapWidth + neighborX]);
                     }
                 }
             }
@@ -40,7 +44,8 @@ PathFinder::PathFinder(cMap *map) {
     }
 }
 
-std::vector<std::pair<int, int>> PathFinder::solveAStar(int startX, int startY, int endX, int endY) {
+std::vector<std::pair<int, int>> PathFinder::solveAStar(int startX, int startY,
+                                                        int endX, int endY) {
     Node *nodeStart = &nodesArr[startY * nMapWidth + startX];
     Node *nodeEnd = &nodesArr[endY * nMapWidth + endX];
     for (int x = 0; x < nMapWidth; x++) {
@@ -52,46 +57,49 @@ std::vector<std::pair<int, int>> PathFinder::solveAStar(int startX, int startY, 
             nodesArr[idx].bVisited = false;
         }
     }
-    auto heuristic = [](Node *a, Node *b){
-        return (a->x - b->x)*(a->x - b->x) + (a->y - b->y)*(a->y - b->y);
+    auto heuristic = [](Node *a, Node *b) {
+        return (a->x - b->x) * (a->x - b->x) + (a->y - b->y) * (a->y - b->y);
     };
 
     Node *nodeCurrent = nodeStart;
     nodeStart->fLocalGoal = 0.0f;
     nodeStart->fGlobalGoal = heuristic(nodeStart, nodeEnd);
 
-    std::list<Node*> listNotTestedNodes;
+    std::list<Node *> listNotTestedNodes;
     listNotTestedNodes.emplace_back(nodeStart);
 
-
-    while(!listNotTestedNodes.empty() && nodeCurrent != nodeEnd){
-        listNotTestedNodes.sort([](const Node *lhs, const Node *rhs){
+    while (!listNotTestedNodes.empty() && nodeCurrent != nodeEnd) {
+        listNotTestedNodes.sort([](const Node *lhs, const Node *rhs) {
             return lhs->fGlobalGoal < rhs->fGlobalGoal;
         });
         // front of the list might also contain nodes that have been visited
-        while(!listNotTestedNodes.empty() && listNotTestedNodes.front()->bVisited){
+        while (!listNotTestedNodes.empty() &&
+               listNotTestedNodes.front()->bVisited) {
             listNotTestedNodes.pop_front();
         }
-        if(listNotTestedNodes.empty()) break;
+        if (listNotTestedNodes.empty())
+            break;
 
         nodeCurrent = listNotTestedNodes.front();
         nodeCurrent->bVisited = true;
 
-        for(auto nodeNbr : nodeCurrent->vecNeighbours){
-            if (!nodeNbr->bVisited){
+        for (auto nodeNbr : nodeCurrent->vecNeighbours) {
+            if (!nodeNbr->bVisited) {
                 listNotTestedNodes.emplace_back(nodeNbr);
             }
-            float candLocalGoal = nodeCurrent->fLocalGoal + heuristic(nodeCurrent, nodeNbr);
-            if(candLocalGoal < nodeNbr->fLocalGoal){
+            float candLocalGoal =
+                nodeCurrent->fLocalGoal + heuristic(nodeCurrent, nodeNbr);
+            if (candLocalGoal < nodeNbr->fLocalGoal) {
                 nodeNbr->fLocalGoal = candLocalGoal;
                 nodeNbr->parent = nodeCurrent;
-                nodeNbr->fGlobalGoal = nodeNbr->fLocalGoal + heuristic(nodeNbr, nodeEnd);
+                nodeNbr->fGlobalGoal =
+                    nodeNbr->fLocalGoal + heuristic(nodeNbr, nodeEnd);
             }
         }
     }
     std::vector<std::pair<int, int>> pathToTake;
     Node *p = nodeEnd;
-    while(p->parent != nullptr){
+    while (p->parent != nullptr) {
         pathToTake.emplace_back(p->x, p->y);
         p = p->parent;
     }
@@ -99,7 +107,4 @@ std::vector<std::pair<int, int>> PathFinder::solveAStar(int startX, int startY, 
     return pathToTake;
 }
 
-PathFinder::~PathFinder() {
-    delete[] nodesArr;
-}
-
+PathFinder::~PathFinder() { delete[] nodesArr; }

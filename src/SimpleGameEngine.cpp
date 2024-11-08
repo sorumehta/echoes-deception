@@ -1,9 +1,9 @@
 #include "SimpleGameEngine.h"
 #include <cmath>
 
-SDL_Window* GameEngine::mWindow = NULL;
-SDL_Renderer* GameEngine::mRenderer = NULL;
-TTF_Font* GameEngine::mFont = NULL;
+SDL_Window *GameEngine::mWindow = NULL;
+SDL_Renderer *GameEngine::mRenderer = NULL;
+TTF_Font *GameEngine::mFont = NULL;
 std::unordered_map<std::string, Mix_Chunk *> GameEngine::mSoundEffects;
 
 LTexture::LTexture() {
@@ -16,24 +16,25 @@ int LTexture::getHeight() const { return mHeight; }
 
 int LTexture::getWidth() const { return mWidth; }
 
-void LTexture::drawTexture(int x, int y, int w, int h, SDL_Rect *clip, double angle, SDL_Point *center,
+void LTexture::drawTexture(int x, int y, int w, int h, SDL_Rect *clip,
+                           double angle, SDL_Point *center,
                            SDL_RendererFlip flip) {
-    //Set rendering space and render to screen
+    // Set rendering space and render to screen
     SDL_Rect renderQuad = {x, y, mWidth, mHeight};
-
 
     if (w != 0 && h != 0) {
         renderQuad.w = w;
         renderQuad.h = h;
     }
-        //Set clip rendering dimensions
+    // Set clip rendering dimensions
     else if (clip != NULL) {
         renderQuad.w = clip->w;
         renderQuad.h = clip->h;
     }
 
-    //Render to screen
-    if(SDL_RenderCopyEx(GameEngine::getRenderer(), mTexture, clip, &renderQuad, angle, center, flip) != 0){
+    // Render to screen
+    if (SDL_RenderCopyEx(GameEngine::getRenderer(), mTexture, clip, &renderQuad,
+                         angle, center, flip) != 0) {
         std::cout << "Error rendering text texture to screen" << std::endl;
     }
 }
@@ -48,26 +49,31 @@ void LTexture::free() {
 }
 
 LTexture::~LTexture() {
-    //Deallocate
+    // Deallocate
     free();
 }
 
-bool LTexture::loadTextureFromText(TTF_Font *font, const std::string &text, SDL_Color color) {
+bool LTexture::loadTextureFromText(TTF_Font *font, const std::string &text,
+                                   SDL_Color color) {
     if (text.length() == 0) {
         // nothing to render
         return true;
     }
-    //free existing texture
+    // free existing texture
     free();
 
-    SDL_Surface *textSurface = TTF_RenderUTF8_Solid_Wrapped(font, text.c_str(), color, 0);
+    SDL_Surface *textSurface =
+        TTF_RenderUTF8_Solid_Wrapped(font, text.c_str(), color, 0);
     if (textSurface == nullptr) {
-        std::cout << "Unable to render text surface! SDL_ttf Error: " << TTF_GetError() << std::endl;
+        std::cout << "Unable to render text surface! SDL_ttf Error: "
+                  << TTF_GetError() << std::endl;
         return false;
     }
-    mTexture = SDL_CreateTextureFromSurface(GameEngine::getRenderer(), textSurface);
+    mTexture =
+        SDL_CreateTextureFromSurface(GameEngine::getRenderer(), textSurface);
     if (mTexture == nullptr) {
-        std::cout << "Unable to create texture from rendered text! SDL Error:" << SDL_GetError() << std::endl;
+        std::cout << "Unable to create texture from rendered text! SDL Error:"
+                  << SDL_GetError() << std::endl;
         return false;
     }
     mWidth = textSurface->w;
@@ -76,49 +82,53 @@ bool LTexture::loadTextureFromText(TTF_Font *font, const std::string &text, SDL_
     return true;
 }
 
-bool LTexture::loadTextureFromFile(std::string path, bool toColorKey, SDL_Color colorKey) {
+bool LTexture::loadTextureFromFile(std::string path, bool toColorKey,
+                                   SDL_Color colorKey) {
 
-    //Get rid of preexisting texture
+    // Get rid of preexisting texture
     free();
 
-    //The final texture
+    // The final texture
     SDL_Texture *newTexture = NULL;
 
-    //Load image at specified path
+    // Load image at specified path
     SDL_Surface *loadedSurface = IMG_Load(path.c_str());
     if (loadedSurface == NULL) {
-        std::cout << "Unable to load image " << path << " SDL_image Error: \n" << IMG_GetError() << std::endl;
+        std::cout << "Unable to load image " << path << " SDL_image Error: \n"
+                  << IMG_GetError() << std::endl;
     } else {
-        if(toColorKey){
-            //Color key image
-            SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, colorKey.r, colorKey.g, colorKey.b));
+        if (toColorKey) {
+            // Color key image
+            SDL_SetColorKey(loadedSurface, SDL_TRUE,
+                            SDL_MapRGB(loadedSurface->format, colorKey.r,
+                                       colorKey.g, colorKey.b));
         }
 
-
-        //Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface(GameEngine::getRenderer(), loadedSurface);
+        // Create texture from surface pixels
+        newTexture = SDL_CreateTextureFromSurface(GameEngine::getRenderer(),
+                                                  loadedSurface);
         if (newTexture == NULL) {
-            std::cout << "Unable to create texture from" << path << "SDL Error: %s\n" << SDL_GetError() << std::endl;
+            std::cout << "Unable to create texture from" << path
+                      << "SDL Error: %s\n"
+                      << SDL_GetError() << std::endl;
         } else {
-            //Get image dimensions
+            // Get image dimensions
             mWidth = loadedSurface->w;
             mHeight = loadedSurface->h;
         }
 
-        //Get rid of old loaded surface
+        // Get rid of old loaded surface
         SDL_FreeSurface(loadedSurface);
     }
 
-    //Return success
+    // Return success
     mTexture = newTexture;
     return mTexture != NULL;
-
 }
 
 void LTexture::setColorMod(SDL_Color color) {
     SDL_SetTextureColorMod(mTexture, color.r, color.g, color.b);
 }
-
 
 GameEngine::GameEngine() : mWindowWidth(80), mWindowHeight(40), FONT_SIZE(18) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
@@ -126,48 +136,53 @@ GameEngine::GameEngine() : mWindowWidth(80), mWindowHeight(40), FONT_SIZE(18) {
     }
     // initialise font loading
     if (TTF_Init() == -1) {
-        std::cout << "SDL_ttf could not initialize! SDL_ttf Error:" << TTF_GetError();
+        std::cout << "SDL_ttf could not initialize! SDL_ttf Error:"
+                  << TTF_GetError();
         return;
     }
-    //Initialize PNG loading
+    // Initialize PNG loading
     int imgFlags = IMG_INIT_PNG;
     if (!(IMG_Init(imgFlags) & imgFlags)) {
-        std::cout << "SDL_image could not initialize! SDL_image Error: \n" << IMG_GetError() << std::endl;
+        std::cout << "SDL_image could not initialize! SDL_image Error: \n"
+                  << IMG_GetError() << std::endl;
         return;
     }
 
-    //Initialize SDL_mixer
-    if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 )
-    {
-        std::cout <<"SDL_mixer could not initialize! SDL_mixer Error: %s\n" << Mix_GetError() << std::endl;
+    // Initialize SDL_mixer
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+        std::cout << "SDL_mixer could not initialize! SDL_mixer Error: %s\n"
+                  << Mix_GetError() << std::endl;
     }
 }
 
+GameEngine::~GameEngine() { close_sdl(); }
 
-GameEngine::~GameEngine() {
-    close_sdl();
-}
-
-bool GameEngine::init(int windowWidth = 80, int windowHeight = 40, const char *title = "Window") {
+bool GameEngine::init(int windowWidth = 80, int windowHeight = 40,
+                      const char *title = "Window") {
     SDL_DisplayMode DM;
     SDL_GetCurrentDisplayMode(0, &DM);
     int maxWidth = DM.w;
     int maxHeight = DM.h;
     if (windowWidth > maxWidth || windowHeight > maxHeight) {
         std::cout << "Window size too large! ";
-        std::cout << "maxWidth = " << maxWidth << ", maxHeight = " << maxHeight << std::endl;
+        std::cout << "maxWidth = " << maxWidth << ", maxHeight = " << maxHeight
+                  << std::endl;
         return false;
     }
-    mWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                               windowWidth, windowHeight, SDL_WINDOW_SHOWN); // 5 margin
+    mWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED,
+                               SDL_WINDOWPOS_UNDEFINED, windowWidth,
+                               windowHeight, SDL_WINDOW_SHOWN); // 5 margin
     if (mWindow == nullptr) {
-        std::cout << "Window could not be created! SDL Error: " << SDL_GetError();
+        std::cout << "Window could not be created! SDL Error: "
+                  << SDL_GetError();
         return false;
     }
 
-    mRenderer = SDL_CreateRenderer(mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    mRenderer = SDL_CreateRenderer(
+        mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (mRenderer == nullptr) {
-        std::cout << "Renderer could not be created! SDL Error: " << SDL_GetError();
+        std::cout << "Renderer could not be created! SDL Error: "
+                  << SDL_GetError();
         return false;
     }
     SDL_SetRenderDrawColor(mRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -175,7 +190,6 @@ bool GameEngine::init(int windowWidth = 80, int windowHeight = 40, const char *t
     mWindowWidth = windowWidth;
     mWindowHeight = windowHeight;
     return true;
-
 }
 
 bool GameEngine::createResources() {
@@ -187,59 +201,56 @@ bool GameEngine::createResources() {
     return true;
 }
 
-
-
 bool GameEngine::renderConsole() {
     if (mRenderer == NULL) {
-        std::cout << "Renderer is not initialised. Perhaps you forgot to call constructConsole?" << std::endl;
+        std::cout << "Renderer is not initialised. Perhaps you forgot to call "
+                     "constructConsole?"
+                  << std::endl;
         return false;
     }
-    //update screen
+    // update screen
     SDL_RenderPresent(mRenderer);
     return true;
 }
 
-
-Uint32 GameEngine::get_pixel(SDL_Surface *surface, float sx, float sy)
-{
+Uint32 GameEngine::get_pixel(SDL_Surface *surface, float sx, float sy) {
     int x = (int)(sx * (float)surface->w);
-    int y = (int)(sy * (float)surface->h-1.0f);
-    if(x < 0 || x >= surface->w || y < 0 || y >= surface->h) {
+    int y = (int)(sy * (float)surface->h - 1.0f);
+    if (x < 0 || x >= surface->w || y < 0 || y >= surface->h) {
         return 0;
     }
     int bpp = surface->format->BytesPerPixel;
     /* Here p is the address to the pixel we want to retrieve */
     Uint8 *p = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
 
-    switch(bpp)
-    {
-        case 1:
-            return *p;
-            break;
+    switch (bpp) {
+    case 1:
+        return *p;
+        break;
 
-        case 2:
-            return *(Uint16 *)p;
-            break;
+    case 2:
+        return *(Uint16 *)p;
+        break;
 
-        case 3:
-            if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
-                return p[0] << 16 | p[1] << 8 | p[2];
-            else
-                return p[0] | p[1] << 8 | p[2] << 16;
-            break;
+    case 3:
+        if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
+            return p[0] << 16 | p[1] << 8 | p[2];
+        else
+            return p[0] | p[1] << 8 | p[2] << 16;
+        break;
 
-        case 4:
-            return *(Uint32 *)p;
-            break;
+    case 4:
+        return *(Uint32 *)p;
+        break;
 
-        default:
-            return 0;   /* shouldn't happen, but avoids warnings */
+    default:
+        return 0; /* shouldn't happen, but avoids warnings */
     }
 }
 
-
 bool GameEngine::drawLine(int x1, int y1, int x2, int y2, Color color) {
-    SDL_SetRenderDrawColor(mRenderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(mRenderer, color.r, color.g, color.b,
+                           SDL_ALPHA_OPAQUE);
     if (SDL_RenderDrawLine(mRenderer, x1, y1, x2, y2) != 0) {
         return false;
     }
@@ -247,7 +258,8 @@ bool GameEngine::drawLine(int x1, int y1, int x2, int y2, Color color) {
 }
 
 bool GameEngine::drawPoint(int x, int y, Color color) {
-    SDL_SetRenderDrawColor(mRenderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(mRenderer, color.r, color.g, color.b,
+                           SDL_ALPHA_OPAQUE);
     if (SDL_RenderDrawPoint(mRenderer, x, y) != 0) {
         return false;
     }
@@ -255,18 +267,20 @@ bool GameEngine::drawPoint(int x, int y, Color color) {
 }
 
 bool GameEngine::fillRect(int x, int y, int w, int h, Color color) {
-    SDL_SetRenderDrawColor(mRenderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(mRenderer, color.r, color.g, color.b,
+                           SDL_ALPHA_OPAQUE);
     const SDL_Rect rect = {x, y, w, h};
-    if (SDL_RenderFillRect(mRenderer, &rect) != 0){
+    if (SDL_RenderFillRect(mRenderer, &rect) != 0) {
         return false;
     }
     return true;
 }
 
 bool GameEngine::drawRect(int x, int y, int w, int h, Color color) {
-    SDL_SetRenderDrawColor(mRenderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(mRenderer, color.r, color.g, color.b,
+                           SDL_ALPHA_OPAQUE);
     const SDL_Rect rect = {x, y, w, h};
-    if (SDL_RenderDrawRect(mRenderer, &rect) != 0){
+    if (SDL_RenderDrawRect(mRenderer, &rect) != 0) {
         return false;
     }
     return true;
@@ -276,25 +290,26 @@ bool GameEngine::drawText(std::string text, int x, int y, Color color) {
     LTexture *font = new LTexture();
     font->loadTextureFromText(GameEngine::getFont(), text, {0xFF, 0xFF, 0xFF});
     font->drawTexture(x, y);
+    return true;
 }
 
 void GameEngine::close_sdl() {
-    //Free the sound
-    for(auto [k, sound] : mSoundEffects){
+    // Free the sound
+    for (auto [k, sound] : mSoundEffects) {
         Mix_FreeChunk(sound);
     }
-    //Destroy window
+    // Destroy window
     SDL_DestroyRenderer(mRenderer);
     SDL_DestroyWindow(mWindow);
     mWindow = NULL;
     mRenderer = NULL;
 
-    //Quit SDL subsystems
+    // Quit SDL subsystems
     SDL_Quit();
 }
 
 void GameEngine::initScreen() {
-    //clear screen
+    // clear screen
     SDL_SetRenderDrawColor(mRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(mRenderer);
 }
@@ -319,19 +334,21 @@ void GameEngine::startGameLoop() {
     while (!quit) {
         // handle timing
         currFrameTime = std::chrono::system_clock::now();
-        std::chrono::duration<float> elapsedTime = currFrameTime - prevFrameTime;
+        std::chrono::duration<float> elapsedTime =
+            currFrameTime - prevFrameTime;
         prevFrameTime = currFrameTime;
         float frameElapsedTime = elapsedTime.count();
         initScreen();
-        //handle input
+        // handle input
         SDL_Event e;
         while (SDL_PollEvent(&e) != 0) {
-            //User requests quit
+            // User requests quit
             if (e.type == SDL_QUIT) {
                 quit = true;
-            } else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
+            } else if (e.type == SDL_KEYDOWN &&
+                       e.key.keysym.sym == SDLK_ESCAPE) {
                 quit = true;
-            } else{
+            } else {
                 // for one time input event handling
                 handleInputEvent(e.type, e.key.keysym.sym, frameElapsedTime);
             }
@@ -350,24 +367,27 @@ void GameEngine::startGameLoop() {
             std::cout << "error while loading texture" << std::endl;
             quit = true;
         }
-
     }
 }
 
-// Draws a model on screen with the given rotation(r), translation(x, y) and scaling(s)
-void GameEngine::DrawWireFrameModel(const std::vector<std::pair<float, float>> &vecModelCoordinates, float x, float y,
-                                    float r, float s, Color color) {
+// Draws a model on screen with the given rotation(r), translation(x, y) and
+// scaling(s)
+void GameEngine::DrawWireFrameModel(
+    const std::vector<std::pair<float, float>> &vecModelCoordinates, float x,
+    float y, float r, float s, Color color) {
     // std::pair.first = x coordinate
     // std::pair.second = y coordinate
 
-    // Create translated model vector of coordinate pairs, we don't want to change the original one
+    // Create translated model vector of coordinate pairs, we don't want to
+    // change the original one
     std::vector<std::pair<float, float>> vecTransformedCoordinates;
     unsigned int verts = vecModelCoordinates.size();
     vecTransformedCoordinates.resize(verts);
 
     // Rotate
     // To rotate the ship by angle A to left, the equations are:
-    //    P2_x = |P2|*cos(A1 + A2) where |P1| and |P2| are equal, A1 is original angle, A2 is rotated angle
+    //    P2_x = |P2|*cos(A1 + A2) where |P1| and |P2| are equal, A1 is original
+    //    angle, A2 is rotated angle
     // => P2_x = P1_x * cos(A2) - P1_y * sin(A2)
     //    Similarly,
     //    P2_y = P1_x * sin(A2) + P1_y * cos(A2)
@@ -377,30 +397,41 @@ void GameEngine::DrawWireFrameModel(const std::vector<std::pair<float, float>> &
     // [P2_y] = [sin(A)   cos(A)] [P1_y]
     for (int i = 0; i < verts; i++) {
         vecTransformedCoordinates[i].first =
-                vecModelCoordinates[i].first * std::cos(r) - vecModelCoordinates[i].second * std::sin(r);
+            vecModelCoordinates[i].first * std::cos(r) -
+            vecModelCoordinates[i].second * std::sin(r);
         vecTransformedCoordinates[i].second =
-                vecModelCoordinates[i].first * std::sin(r) + vecModelCoordinates[i].second * std::cos(r);
+            vecModelCoordinates[i].first * std::sin(r) +
+            vecModelCoordinates[i].second * std::cos(r);
     }
 
     // Scale
     for (int i = 0; i < verts; i++) {
-        vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first * s;
-        vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second * s;
+        vecTransformedCoordinates[i].first =
+            vecTransformedCoordinates[i].first * s;
+        vecTransformedCoordinates[i].second =
+            vecTransformedCoordinates[i].second * s;
     }
 
     // Translate
     for (int i = 0; i < verts; i++) {
-        vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first + x;
-        vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second + y;
+        vecTransformedCoordinates[i].first =
+            vecTransformedCoordinates[i].first + x;
+        vecTransformedCoordinates[i].second =
+            vecTransformedCoordinates[i].second + y;
     }
 
     // Draw Closed Polygon
     for (int i = 0; i < verts + 1; i++) {
         int j = (i + 1);
-        drawLine(static_cast<int>(std::round(vecTransformedCoordinates[i % verts].first)),
-                 static_cast<int>(std::round(vecTransformedCoordinates[i % verts].second)),
-                 static_cast<int>(std::round(vecTransformedCoordinates[j % verts].first)),
-                 static_cast<int>(std::round(vecTransformedCoordinates[j % verts].second)), color);
+        drawLine(static_cast<int>(
+                     std::round(vecTransformedCoordinates[i % verts].first)),
+                 static_cast<int>(
+                     std::round(vecTransformedCoordinates[i % verts].second)),
+                 static_cast<int>(
+                     std::round(vecTransformedCoordinates[j % verts].first)),
+                 static_cast<int>(
+                     std::round(vecTransformedCoordinates[j % verts].second)),
+                 color);
     }
 }
 
@@ -425,12 +456,15 @@ TTF_Font *GameEngine::getFont() {
     return mFont;
 }
 
-void GameEngine::handleInputState(const unsigned char *keyboardState, int mouseX, int mouseY, float secPerFrame) {}
+void GameEngine::handleInputState(const unsigned char *keyboardState,
+                                  int mouseX, int mouseY, float secPerFrame) {}
 
-void GameEngine::handleInputEvent(int eventType, int keyCode, float fElapsedTime) {}
+void GameEngine::handleInputEvent(int eventType, int keyCode,
+                                  float fElapsedTime) {}
 
-void GameEngine::loadSoundEffects(std::unordered_map<std::string, std::string> soundFiles) {
-    for (auto [k, v] : soundFiles){
+void GameEngine::loadSoundEffects(
+    std::unordered_map<std::string, std::string> soundFiles) {
+    for (auto [k, v] : soundFiles) {
         mSoundEffects[k] = Mix_LoadWAV(v.c_str());
     }
 }
@@ -439,6 +473,6 @@ std::unordered_map<std::string, Mix_Chunk *> GameEngine::getSoundEffects() {
     return mSoundEffects;
 }
 
-void GameEngine::playSound(std::string soundName){
+void GameEngine::playSound(std::string soundName) {
     Mix_PlayChannel(-1, mSoundEffects[soundName], 0);
 }
